@@ -1,0 +1,2523 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reservations Department Dashboard</title>
+
+  <style>
+    :root{
+      --bg:#faf7fb;
+      --panel:#ffffff;
+      --line:#eaddea;
+      --text:#1f2a37;
+      --muted:#6b7280;
+
+      --primary:#c02678;
+      --primary-2:#f6e7f0;
+      --primary-3:#f2d4e6;
+
+      --accent:#7c3aed;
+      --accent-2:#ede9fe;
+
+      --warn:#f59e0b;
+      --ok:#0e7a2f;
+      --danger:#c81e1e;
+
+      --shadow: 0 10px 26px rgba(17,24,39,.08);
+      --radius:14px;
+
+      /* stronger calendar grid colors */
+      --calGrid:#e3c1df;
+      --calGrid2:#d7b1d3;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:var(--bg);
+    }
+
+    .app{
+      display:grid;
+      grid-template-columns: 260px 1fr;
+      min-height:100vh;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      background: linear-gradient(180deg, #1b1021, #120a17);
+      color:#fff;
+      padding:16px;
+      position:sticky;
+      top:0;
+      height:100vh;
+      overflow:auto;
+      border-right:1px solid rgba(255,255,255,.06);
+    }
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:10px 10px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      margin-bottom:12px;
+    }
+
+    /* Profile image more pink emphasis */
+    .avatar{
+      width:44px;
+      height:44px;
+      border-radius:16px;
+      overflow:hidden;
+      border:2px solid rgba(192,38,120,.85);
+      background: rgba(255,255,255,.10);
+      box-shadow:
+        0 0 0 4px rgba(192,38,120,.18),
+        0 16px 30px rgba(192,38,120,.28),
+        0 10px 26px rgba(0,0,0,.18);
+      flex: 0 0 auto;
+      position:relative;
+    }
+    .avatar::after{
+      content:"";
+      position:absolute;
+      inset:-10px;
+      background: radial-gradient(circle at 30% 25%, rgba(192,38,120,.35), rgba(192,38,120,0) 55%);
+      pointer-events:none;
+    }
+    .avatar img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      position:relative;
+      z-index:1;
+    }
+
+    .brand h1{
+      font-size:14px; margin:0; line-height:1.2;
+      letter-spacing:.2px;
+    }
+    .brand p{
+      font-size:12px; margin:2px 0 0 0; color:rgba(255,255,255,.7)
+    }
+
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:10px;
+    }
+    .nav button{
+      width:100%;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      text-align:left;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      transition:.15s ease;
+      font-weight:700;
+    }
+    .nav button:hover{ transform: translateY(-1px); background:rgba(255,255,255,.10); }
+    .nav button.active{
+      background:rgba(192,38,120,.22);
+      border-color: rgba(192,38,120,.35);
+      box-shadow: 0 14px 28px rgba(192,38,120,.18);
+    }
+    .nav small{ color:rgba(255,255,255,.7); font-weight:600; }
+
+    .nav .hint{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.78);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    /* Main */
+    .main{
+      padding:18px 18px 40px 18px;
+      overflow:auto;
+    }
+
+    .topbar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:14px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .title h2{
+      margin:0;
+      font-size:18px;
+    }
+    .title p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background:var(--panel);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:13px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      box-shadow: var(--shadow);
+    }
+    .pill input{
+      border:none;
+      outline:none;
+      font-size:13px;
+      width:240px;
+      background:transparent;
+    }
+
+    .btn{
+      border:1px solid var(--line);
+      background:var(--panel);
+      padding:8px 10px;
+      border-radius:12px;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+      transition:.15s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn.primary{
+      border-color: #f0cbe0;
+      background: linear-gradient(180deg, #fff, #fff7fb);
+      color: var(--primary);
+    }
+    .btn.danger{ border-color:#ffd0d0; background:#fff; color:#b00000; }
+
+    /* Sections */
+    .section{
+      display:none;
+      gap:14px;
+    }
+    .section.active{
+      display:grid;
+      grid-template-columns: 1.6fr 1fr;
+      align-items:start;
+    }
+    /* Groups soll volle Breite nehmen */
+    #groups.section.active{
+      grid-template-columns: 1fr;
+    }
+
+    @media (max-width: 1100px){
+      .section.active{ grid-template-columns: 1fr; }
+      .pill input{ width:150px; }
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:12px 14px;
+      background:linear-gradient(0deg, #ffffff, #fff9fc);
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .cardHeader h3{
+      margin:0;
+      font-size:15px;
+    }
+    .cardBody{ padding:12px 14px; }
+
+    /* Table */
+    .tableWrap{
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius: 12px;
+      background:#fff;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width: 980px;
+      font-size:13px;
+    }
+    thead th{
+      position:sticky;
+      top:0;
+      background: var(--primary-2);
+      color:#111827;
+      border-bottom:1px solid var(--line);
+      padding:10px 10px;
+      text-align:left;
+      font-size:12px;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+    tbody td{
+      border-bottom:1px solid #f2eaf2;
+      padding:9px 10px;
+      vertical-align:top;
+    }
+    tbody tr:nth-child(even){ background:#fffbfd; }
+    .tagYes{ color:var(--danger); font-weight:900; }
+
+    .grid2{ display:grid; grid-template-columns: 1fr; gap:14px; }
+
+    .listItem{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px dashed rgba(17,24,39,.14);
+      background:rgba(255,255,255,.65);
+      margin-bottom:8px;
+      cursor:pointer;
+    }
+    .listItem:hover{ background:#fff; border-style:solid; }
+    .listItem span{ font-weight:900; font-size:13px; }
+    .listItem small{ color:var(--muted); }
+
+    /* attachments (bleiben für Link-Listen) */
+    .attachPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(17,24,39,.10);
+      background:rgba(255,255,255,.85);
+      padding:6px 8px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      color:#111827;
+      max-width: 260px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .attachPill .name{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width: 210px;
+      display:inline-block;
+    }
+    .icon{ width:18px; height:18px; flex:0 0 auto; display:inline-block; }
+
+    /* Editable note boxes */
+    .noteGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .note{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background: #fff;
+      padding:10px 10px;
+    }
+    .note .label{
+      font-size:12px;
+      font-weight:950;
+      color:#111827;
+      margin-bottom:6px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .note .content{
+      min-height:70px;
+      outline:none;
+      border-radius:10px;
+      padding:8px;
+      background: #fbf7fb;
+      border:1px solid #f0e1f0;
+      font-size:13px;
+      line-height:1.35;
+      white-space:pre-wrap;
+    }
+    .tinyBtn{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:10px;
+      padding:6px 8px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12px;
+    }
+
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 1100px){
+      .twoCol{ grid-template-columns:1fr; }
+    }
+    .footerHint{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    /* Groups Link input */
+    .linkInput{
+      width:100%;
+      border:1px solid #f0e1f0;
+      background:#fff;
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:13px;
+      outline:none;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .linkInput[readonly]{
+      cursor:pointer;
+      background:#fbf7fb;
+    }
+
+    /* Calendar */
+    .calendarHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .calControls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    select{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:8px 10px;
+      font-weight:800;
+      box-shadow: var(--shadow);
+      outline:none;
+    }
+    .calToggles{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      box-shadow: var(--shadow);
+      font-size:12.5px;
+      color:#111827;
+    }
+    .toggle{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      user-select:none;
+      font-weight:850;
+    }
+    .toggle input{ transform: translateY(1px); }
+
+    /* stronger calendar raster */
+    .calendarGrid{
+      border:2px solid var(--calGrid2);
+      border-radius: 14px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow: 0 10px 26px rgba(17,24,39,.06);
+    }
+    .calWeekdays{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: var(--primary-2);
+      border-bottom:2px solid var(--calGrid2);
+    }
+    .calWeekdays div{
+      padding:10px 10px;
+      font-weight:950;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.02em;
+      color:#111827;
+      border-right:2px solid var(--calGrid2);
+    }
+    .calWeekdays div:nth-child(7){ border-right:none; }
+
+    .calDays{ display:grid; grid-template-columns: repeat(7, 1fr); }
+    .dayCell{
+      min-height: 152px;
+      border-right:2px solid var(--calGrid);
+      border-bottom:2px solid var(--calGrid);
+      padding:8px;
+      position:relative;
+      background:#fff;
+    }
+    .dayCell:nth-child(7n){ border-right:none; }
+
+    .dayTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:6px;
+    }
+    .dayNum{
+      font-weight:950;
+      font-size:13px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid #f2eaf2;
+    }
+    .dayNum.muted{ opacity:.45; }
+    .colorDot{
+      width:12px; height:12px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.10);
+      flex:0 0 auto;
+    }
+    .sysBadges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin:6px 0 6px 0;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 7px;
+      border-radius:999px;
+      font-size:11.5px;
+      font-weight:900;
+      border:1px solid rgba(17,24,39,.10);
+      background:rgba(255,255,255,.75);
+      color:#111827;
+      line-height:1;
+      max-width:100%;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .badge .dot{
+      width:8px; height:8px; border-radius:999px;
+      border:1px solid rgba(0,0,0,.12);
+      flex:0 0 auto;
+    }
+    .badge .emoji{
+      font-size:12.5px;
+      line-height:1;
+      transform: translateY(-.5px);
+    }
+    .badge.smallNote{ font-weight:850; opacity:.92; }
+
+    .dayNote{
+      width:100%;
+      min-height:64px;
+      border:1px solid #f0e1f0;
+      background:#fbf7fb;
+      border-radius:12px;
+      padding:8px;
+      font-size:12.5px;
+      line-height:1.25;
+      resize: vertical;
+      outline:none;
+    }
+    .dayFooter{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-top:6px;
+    }
+    .catSelect{
+      width:100%;
+      border-radius:12px;
+      padding:7px 9px;
+      font-weight:850;
+      box-shadow:none;
+    }
+    .todayRing{
+      outline: 2px solid rgba(192,38,120,.25);
+      outline-offset: -2px;
+      background: linear-gradient(180deg, #fff, #fff7fb);
+    }
+
+    /* FIT Calendar */
+    .fitDayFooter{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-top:6px;
+      padding-top:6px;
+      border-top:1px dashed #f2eaf2;
+      font-size:12px;
+    }
+    .fitChecks{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .fitCheck{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      user-select:none;
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(17,24,39,.10);
+      background:rgba(255,255,255,.75);
+    }
+    .fitCheck input{ transform: translateY(1px); }
+
+    /* creamy, non-identical */
+    .fit-abreu        { background: rgba(255, 229, 214, .85); border-color: rgba(233, 120, 72, .25); }
+    .fit-travco       { background: rgba(216, 247, 231, .85); border-color: rgba(22, 163, 74, .20); }
+
+    /* closed separately */
+    .fit-abreuClosed  { background: rgba(236, 220, 214, .90); border-color: rgba(17,24,39,.22); }
+    .fit-travcoClosed { background: rgba(214, 234, 224, .90); border-color: rgba(17,24,39,.22); }
+
+    .fitLegend{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:8px;
+      font-size:12.5px;
+      color:#111827;
+      font-weight:850;
+    }
+    .fitLegend .badge{
+      background:rgba(255,255,255,.85);
+    }
+
+    /* --------------------------
+       RESA Buch
+    --------------------------- */
+    .resaRow{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:10px;
+    }
+    .resaRowTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .resaLetter{
+      font-weight:950;
+      font-size:14px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid #f0e1f0;
+      background:#fff7fb;
+    }
+    .resaFields{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .resaFieldLabel{
+      font-size:12px;
+      font-weight:950;
+      color:#111827;
+      margin-bottom:6px;
+    }
+    .resaText{
+      width:100%;
+      min-height:90px;
+      border:1px solid #f0e1f0;
+      background:#fbf7fb;
+      border-radius:12px;
+      padding:10px;
+      font-size:13px;
+      line-height:1.35;
+      resize:vertical;
+      outline:none;
+    }
+    .resaLink{
+      width:100%;
+      border:1px solid #f0e1f0;
+      background:#fff;
+      border-radius:12px;
+      padding:10px;
+      font-size:13px;
+      outline:none;
+      white-space:nowrap;
+      overflow:visible;
+      text-overflow:clip;
+    }
+
+    /* Print: nur RESA Buch drucken */
+    @media print{
+      body.print-resa .sidebar,
+      body.print-resa .topbar,
+      body.print-resa section:not(#resaBook){
+        display:none !important;
+      }
+      body.print-resa .main{
+        padding:0 !important;
+      }
+      body.print-resa #resaBook{
+        display:block !important;
+      }
+      body.print-resa .card{
+        box-shadow:none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="avatar" title="Profilbild: minnie.png">
+          <img src="minnie.png" alt="Profilbild"
+               onerror="this.style.display='none'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center'; this.parentElement.style.color='rgba(255,255,255,.8)'; this.parentElement.innerHTML='DR';" />
+        </div>
+        <div>
+          <h1>Reservations Department</h1>
+          <p>Persönliches Dashboard</p>
+        </div>
+      </div>
+
+      <div class="nav" role="navigation" aria-label="Navigation">
+        <button class="navBtn active" data-target="groups">
+          Gruppen 2026/2027 <small>1</small>
+        </button>
+        <button class="navBtn" data-target="listsForms">
+          Listen & Formulare <small>2</small>
+        </button>
+        <button class="navBtn" data-target="reports">
+          Berichte <small>3</small>
+        </button>
+        <button class="navBtn" data-target="handover">
+          Übergabe <small>4</small>
+        </button>
+        <button class="navBtn" data-target="todo">
+          ToDo List <small>5</small>
+        </button>
+        <button class="navBtn" data-target="checklists">
+          Checklisten <small>6</small>
+        </button>
+
+        <button class="navBtn" data-target="resaBook">
+          RESA Buch <small>7</small>
+        </button>
+
+        <button class="navBtn" data-target="calendar">
+          Kalender <small>8</small>
+        </button>
+
+        <button class="navBtn" data-target="calendarFit">
+          Kalender FIT <small>9</small>
+        </button>
+
+        <div class="hint">
+          ✍️ Alle Felder sind editierbar & werden automatisch gespeichert.<br><br>
+          🔗 Links öffnen: <b>Ctrl</b>/<b>⌘</b>/<b>Alt</b> + Klick in einem Textfeld (öffnet die erste URL im Text).<br><br>
+          🧾 Groups: Link-Spalte → Klick öffnet • Doppelklick bearbeitet.
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div class="title">
+          <h2>Reservations Startseite</h2>
+          <p>Gruppen, Listen, Formulare, Übergaben, Checklisten & Kalender</p>
+        </div>
+
+        <div class="actions">
+          <div class="pill" title="Sucht in der Gruppen-Tabelle (einfach)">
+            🔎 <input id="globalSearch" type="search" placeholder="Suchen… (Name, GP Code…)" />
+          </div>
+          <button class="btn danger" id="resetBtn" title="Alles löschen (LocalStorage)">Reset</button>
+        </div>
+      </div>
+
+      <!-- SECTION: GROUPS -->
+      <section id="groups" class="section active">
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="cardHeader">
+            <h3>GROUPS 2026/2027</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="addRowBtn">+ Zeile</button>
+              <button class="btn" id="saveTableBtn">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table id="groupsTable" aria-label="Groups table">
+                <thead>
+                  <tr>
+                    <th>NAME</th>
+                    <th>Rate Code</th>
+                    <th>MARKET</th>
+                    <th>PROFORMA</th>
+                    <th>PAYMENT</th>
+                    <th>FOC</th>
+                    <th>Breakfast Rate</th>
+                    <th>LINK</th>
+                    <th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+
+            <div class="footerHint">
+              🔗 Link: <b>Klick</b> öffnet • <b>Doppelklick</b> bearbeiten • <b>ESC</b> verwirft • <b>Enter</b> speichert.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: LISTS & FORMS -->
+      <section id="listsForms" class="section">
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Listen & Formulare</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="addNoteLF">+ Notizbox</button>
+              <button class="btn" id="saveLF">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="twoCol">
+              <div class="noteGrid" id="lfNotesLeft"></div>
+              <div class="noteGrid" id="lfNotesRight"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Quick Links</h3>
+            <button class="tinyBtn" data-additem="quickLinks">+ Link</button>
+          </div>
+          <div class="cardBody">
+            <div id="quickLinksList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: REPORTS -->
+      <section id="reports" class="section">
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Berichte</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="addReportBox">+ Feld</button>
+              <button class="btn" id="saveReports">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="noteGrid" id="reportsNotes"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Event Kalender Links</h3>
+            <button class="tinyBtn" data-additem="calendarLinks">+ Link</button>
+          </div>
+          <div class="cardBody">
+            <div id="calendarLinksList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: HANDOVER -->
+      <section id="handover" class="section">
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Übergabe</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="addHandover">+ Punkt</button>
+              <button class="btn" id="saveHandover">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="noteGrid" id="handoverNotes"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Telefon / Kontakte</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="addContacts">+ Kontaktfeld</button>
+              <button class="btn" id="saveContacts">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="noteGrid" id="contactsNotes"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: TODO -->
+      <section id="todo" class="section">
+        <div class="card">
+          <div class="cardHeader">
+            <h3>ToDo List</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="addTodo">+ Task</button>
+              <button class="btn" id="saveTodo">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div id="todoList"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Notizen</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="addTodoNote">+ Notizbox</button>
+              <button class="btn" id="saveTodoNote">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="noteGrid" id="todoNotes"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: CHECKLISTS -->
+      <section id="checklists" class="section">
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Checklisten (Vorlagen)</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="addChecklist">+ Checklist</button>
+              <button class="btn" id="saveChecklists">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div id="checklistsWrap"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Freie Felder</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="addFreeField">+ Feld</button>
+              <button class="btn" id="saveFreeFields">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="noteGrid" id="freeFields"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: RESA BOOK -->
+      <section id="resaBook" class="section">
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="cardHeader">
+            <h3>RESA Buch (A–Z)</h3>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="resaAddBtn">+ Zeile (nächster Buchstabe)</button>
+              <button class="btn" id="resaPrintBtn" title="Druckt nur das RESA Buch">Drucken</button>
+              <button class="btn" id="resaSaveBtn">Speichern</button>
+            </div>
+          </div>
+
+          <div class="cardBody">
+            <div class="muted" style="font-weight:850; margin-bottom:10px;">
+              Pro Buchstabe: Text + Link (volle URL sichtbar). Reihen können gelöscht und neu hinzugefügt werden (bis Z).
+            </div>
+
+            <div id="resaBookWrap" class="noteGrid"></div>
+
+            <div class="footerHint">
+              Tipp: Beim Drucken werden nur RESA-Buch Inhalte angezeigt.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: CALENDAR -->
+      <section id="calendar" class="section">
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="cardHeader">
+            <h3>Kalender</h3>
+            <div class="calControls">
+              <button class="btn" id="calTodayBtn">Heute</button>
+              <button class="btn" id="calClearMonthBtn" title="Löscht alle Einträge in diesem Monat">Monat leeren</button>
+              <button class="btn" id="calSaveBtn">Speichern</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="calendarHeader">
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div class="muted" style="font-weight:850;">
+                  Pro Tag: Kategorie (Dropdown) + Notiz. Zusätzlich: Zürich-Events & Feiertage (optional sichtbar).
+                </div>
+
+                <div class="calToggles">
+                  <label class="toggle">
+                    <input type="checkbox" id="toggleCityEvents" />
+                    Zürich Events
+                  </label>
+                  <label class="toggle">
+                    <input type="checkbox" id="toggleHolidays" />
+                    Feiertage
+                  </label>
+                </div>
+              </div>
+
+              <div class="calControls">
+                <select id="calMonth"></select>
+                <select id="calYear"></select>
+              </div>
+            </div>
+
+            <div class="calendarGrid">
+              <div class="calWeekdays" id="calWeekdays"></div>
+              <div class="calDays" id="calDays"></div>
+            </div>
+
+            <div class="footerHint">
+              Tipp: Links in Notizen öffnen mit <b>Ctrl/⌘/Alt + Klick</b> (öffnet die erste URL im Text).
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: CALENDAR FIT -->
+      <section id="calendarFit" class="section">
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="cardHeader">
+            <h3>Kalender FIT</h3>
+            <div class="calControls">
+              <button class="btn" id="fitTodayBtn">Heute</button>
+              <button class="btn" id="fitClearMonthBtn" title="Löscht alle FIT-Markierungen in diesem Monat">Monat leeren</button>
+              <button class="btn" id="fitSaveBtn">Speichern</button>
+            </div>
+          </div>
+
+          <div class="cardBody">
+            <div class="calendarHeader">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <div class="muted" style="font-weight:850;">
+                  Pro Tag markieren: <b>Abreu</b> / <b>Travco</b> (eingetragen) + <b>Closed</b> getrennt für beide.
+                </div>
+
+                <div class="fitLegend">
+                  <div class="badge"><span class="dot" style="background:#e97848;"></span>Abreu ✓</div>
+                  <div class="badge"><span class="dot" style="background:#16a34a;"></span>Travco ✓</div>
+                  <div class="badge"><span class="dot" style="background:#111827;"></span>Closed Abreu</div>
+                  <div class="badge"><span class="dot" style="background:#111827;"></span>Closed Travco</div>
+                </div>
+              </div>
+
+              <div class="calControls">
+                <select id="fitMonth"></select>
+                <select id="fitYear"></select>
+              </div>
+            </div>
+
+            <div class="calendarGrid">
+              <div class="calWeekdays" id="fitWeekdays"></div>
+              <div class="calDays" id="fitDays"></div>
+            </div>
+
+            <div class="footerHint">
+              Tipp: Du kannst Closed für Abreu und Travco unabhängig setzen.
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    /* -------------------------- Storage --------------------------- */
+    const KEY = "resa_dashboard_v6_groups_link_only";
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(KEY);
+        if(!raw) return null;
+        return JSON.parse(raw);
+      }catch(e){
+        console.warn("Could not load state", e);
+        return null;
+      }
+    }
+    function saveState(state){
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
+
+    /* -------------------------- File helpers (base64 attachments) --------------------------- */
+    function safeName(name){
+      return (name || "datei").replace(/[^\w.\- ()äöüÄÖÜß]/g, "_");
+    }
+
+    function fileToAttachment(file){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve({
+            name: safeName(file.name),
+            type: file.type || "application/octet-stream",
+            size: file.size || 0,
+            dataUrl: reader.result
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function guessKind(att){
+      const name = (att?.name || "").toLowerCase();
+      const type = (att?.type || "").toLowerCase();
+      if(type.includes("pdf") || name.endsWith(".pdf")) return "pdf";
+      if(type.includes("excel") || name.endsWith(".xls") || name.endsWith(".xlsx") || name.endsWith(".csv")) return "excel";
+      return "file";
+    }
+
+    function iconSvg(kind){
+      if(kind === "excel"){
+        return `
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#0e7a2f" d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+            <path fill="#fff" d="M14 2v6h6z"/>
+            <path fill="#fff" d="M8 10h8v1.8H8zm0 3h8v1.8H8zm0 3h8v1.8H8z"/>
+            <path fill="#e6ffee" d="M7.2 9.8l2.2 3.2-2.2 3.2h2.2l1.1-1.9 1.1 1.9h2.2L11.7 13l2.1-3.2H11.6l-1 1.8-1-1.8z"/>
+          </svg>
+        `;
+      }
+      if(kind === "pdf"){
+        return `
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#c81e1e" d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+            <path fill="#fff" d="M14 2v6h6z"/>
+            <path fill="#fff" d="M7.8 16.8c2.5-1.2 4.6-3.6 5.5-5.9.6 1.2 1.5 2.5 2.9 3.4-.9.2-2 .2-3.3 0-1.7-.2-3.3-.7-5.1 2.5z" opacity=".9"/>
+            <path fill="#ffe3e3" d="M8 18.2c1.2-2.2 2.6-2.4 4.7-2.1 1.7.2 3.2.1 4.2-.2.5-.2.8.6.3.9-1.3.7-3.2 1-5.1.7-1.8-.2-3.4-.3-4.1.7-.2.3-.2.3 0 0z"/>
+          </svg>
+        `;
+      }
+      return `
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#7c3aed" d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+          <path fill="#fff" d="M14 2v6h6z"/>
+          <path fill="#ede9fe" d="M8 12h8v2H8zM8 16h8v2H8z"/>
+        </svg>
+      `;
+    }
+
+    function openAttachment(att){
+      if(!att || !att.dataUrl) return;
+      const w = window.open(att.dataUrl, "_blank", "noopener,noreferrer");
+      if(!w){
+        alert("Popup blockiert. Bitte Popups erlauben oder nutze Download.");
+      }
+    }
+
+    function downloadAttachment(att){
+      if(!att || !att.dataUrl) return;
+      const a = document.createElement("a");
+      a.href = att.dataUrl;
+      a.download = att.name || "download";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function escapeHtml(str){
+      if(str === null || str === undefined) return "";
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function renderAttachmentPill(att){
+      if(!att || !att.dataUrl) return `<span class="muted" style="font-size:12px;">—</span>`;
+      const kind = guessKind(att);
+      const svg = iconSvg(kind);
+      const label = escapeHtml(att.name || "Datei");
+      return `
+        <span class="attachPill" title="${label}">
+          ${svg}
+          <span class="name">${label}</span>
+        </span>
+      `;
+    }
+
+    /* -------------------------- URL helpers --------------------------- */
+    function normalizeUrl(u){
+      const url = (u || "").trim();
+      if(!url) return "";
+      return (url.startsWith("http://") || url.startsWith("https://")) ? url : ("https://" + url);
+    }
+
+    /* -------------------------- Link open everywhere (Ctrl/⌘/Alt + Klick) --------------------------- */
+    function extractFirstUrl(text){
+      if(!text) return "";
+      const t = String(text);
+      const m = t.match(/\bhttps?:\/\/[^\s<>"']+|\bwww\.[^\s<>"']+/i);
+      return m ? m[0] : "";
+    }
+    function wantsOpenLink(ev){
+      return (ev.ctrlKey || ev.metaKey || ev.altKey);
+    }
+    function openUrlFromText(text){
+      const u = extractFirstUrl(text);
+      if(!u) return false;
+      const url = normalizeUrl(u);
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if(!w) alert("Popup blockiert. Bitte Popups erlauben.");
+      return true;
+    }
+
+    document.addEventListener("click", (ev) => {
+      if(!wantsOpenLink(ev)) return;
+
+      const el = ev.target;
+
+      // contenteditable blocks
+      const ce = el?.closest?.("[contenteditable='true']");
+      if(ce){
+        const sel = window.getSelection?.()?.toString?.().trim();
+        const txt = sel || ce.innerText || ce.textContent || "";
+        if(openUrlFromText(txt)){
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+        return;
+      }
+
+      // textareas (calendar notes, resaText)
+      if(el && el.tagName === "TEXTAREA"){
+        const selStart = el.selectionStart ?? 0;
+        const selEnd   = el.selectionEnd ?? 0;
+        const selected = (selEnd > selStart) ? el.value.slice(selStart, selEnd) : "";
+        const txt = selected || el.value || "";
+        if(openUrlFromText(txt)){
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+        return;
+      }
+
+      // inputs (optional)
+      if(el && el.tagName === "INPUT" && (el.type === "text" || el.type === "url")){
+        const txt = el.value || "";
+        if(openUrlFromText(txt)){
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+      }
+    });
+
+    /* -------------------------- Default state --------------------------- */
+    const DEFAULT = {
+      groupsRows: [
+        { name:"BUSINESS GROUPS", rate:"GPRBB", market:"OS", proforma:"YES", payment:"PREPAYMENT", foc:"ON REQUEST", breakfast:"CHF 15.00", link:"" },
+        { name:"LEISURE GROUPS",  rate:"GP1",   market:"OT", proforma:"YES", payment:"PREPAYMENT", foc:"ON REQUEST", breakfast:"CHF 13.00", link:"" },
+        { name:"EUROPE INCOMING", rate:"GP8",   market:"ST", proforma:"NO",  payment:"CL",        foc:"½ Twin ab 20 Pax", breakfast:"CHF 12.00", link:"" },
+        { name:"PANAVISION",      rate:"GP4",   market:"ST", proforma:"YES", payment:"PREPAYMENT",foc:"½ Twin ab 20 Pax", breakfast:"CHF 13.00", link:"" }
+      ],
+
+      linkLists: {
+        forms: [
+          { title:"Group contract FORM", note:"Link einfügen", attachment:null },
+          { title:"ROOMINGLISTE-FORM", note:"Link einfügen", attachment:null }
+        ],
+        lists: [
+          { title:"GROUPOVERVIEW LIST", note:"Link einfügen", attachment:null },
+          { title:"FORECAST LIST", note:"Link einfügen", attachment:null }
+        ],
+        reportsCalendar: [
+          { title:"EVENTKALENDER 2026", note:"Link einfügen", attachment:null }
+        ],
+        quickLinks: [],
+        calendarLinks: []
+      },
+
+      notes: {
+        listsForms: [],
+        reports: [],
+        handover: [],
+        contacts: [],
+        todoNotes: [],
+        freeFields: []
+      },
+
+      todo: [
+        { text:"Beispiel: Gruppenkontingente prüfen", done:false },
+        { text:"Beispiel: Zahlungseingang kontrollieren", done:false }
+      ],
+
+      checklists: [
+        { title:"Gruppen Checkliste", items:[
+          { text:"Angebot/Contract erstellt", done:false },
+          { text:"Rooming List erhalten", done:false }
+        ]}
+      ],
+
+      calendar: { entries:{}, settings:{ showCityEvents:true, showHolidays:true } },
+      calendarFit: { entries:{} },
+
+      resaBook: { rows: [ { letter:"A", text:"", link:"" } ] }
+    };
+
+    let state = loadState() || structuredClone(DEFAULT);
+
+    /* -------------------------- Navigation --------------------------- */
+    $$(".navBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        $$(".navBtn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const target = btn.dataset.target;
+        $$(".section").forEach(sec => sec.classList.remove("active"));
+        document.getElementById(target).classList.add("active");
+      });
+    });
+
+    /* -------------------------- Groups table --------------------------- */
+    function renderGroupsTable(rows){
+      const tbody = $("#groupsTable tbody");
+      tbody.innerHTML = "";
+
+      rows.forEach((r, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td contenteditable="true" data-k="name" data-i="${idx}">${escapeHtml(r.name)}</td>
+          <td contenteditable="true" data-k="rate" data-i="${idx}">${escapeHtml(r.rate)}</td>
+          <td contenteditable="true" data-k="market" data-i="${idx}">${escapeHtml(r.market)}</td>
+          <td contenteditable="true" data-k="proforma" data-i="${idx}">${escapeHtml(r.proforma)}</td>
+          <td contenteditable="true" data-k="payment" data-i="${idx}">${escapeHtml(r.payment)}</td>
+          <td contenteditable="true" data-k="foc" data-i="${idx}">${escapeHtml(r.foc)}</td>
+          <td contenteditable="true" data-k="breakfast" data-i="${idx}">${escapeHtml(r.breakfast)}</td>
+
+          <td>
+            <input class="linkInput" data-linkinp="${idx}" type="url"
+                   placeholder="https://…" value="${escapeHtml(r.link || "")}" readonly />
+          </td>
+
+          <td><button class="tinyBtn" data-delrow="${idx}">Löschen</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      $$("#groupsTable tbody td[data-k='proforma']").forEach(td => {
+        const t = td.innerText.trim().toUpperCase();
+        td.classList.toggle("tagYes", t === "YES");
+      });
+
+      $$("#groupsTable tbody td[contenteditable='true']").forEach(td => {
+        td.addEventListener("input", () => {
+          const i = Number(td.dataset.i);
+          const k = td.dataset.k;
+          state.groupsRows[i][k] = td.innerText.trim();
+          saveState(state);
+          if(k === "proforma"){
+            td.classList.toggle("tagYes", td.innerText.trim().toUpperCase() === "YES");
+          }
+        });
+      });
+
+      // Link: click opens, dblclick edits, ESC revert, Enter save
+      $$("[data-linkinp]").forEach(inp => {
+        const i = Number(inp.dataset.linkinp);
+
+        inp.addEventListener("click", () => {
+          if(!inp.readOnly) return;
+          const url = normalizeUrl(inp.value);
+          if(!url) return alert("Kein Link hinterlegt.");
+          const w = window.open(url, "_blank", "noopener,noreferrer");
+          if(!w) alert("Popup blockiert. Bitte Popups erlauben.");
+        });
+
+        inp.addEventListener("dblclick", () => {
+          inp.readOnly = false;
+          inp.focus();
+          inp.select();
+        });
+
+        const commit = () => {
+          state.groupsRows[i].link = (inp.value || "").trim();
+          saveState(state);
+          inp.readOnly = true;
+        };
+
+        inp.addEventListener("blur", commit);
+        inp.addEventListener("keydown", (e) => {
+          if(e.key === "Enter"){
+            e.preventDefault();
+            inp.blur();
+          }
+          if(e.key === "Escape"){
+            inp.value = state.groupsRows[i].link || "";
+            inp.readOnly = true;
+            inp.blur();
+          }
+        });
+      });
+
+      $$("[data-delrow]").forEach(b => {
+        b.addEventListener("click", () => {
+          const i = Number(b.dataset.delrow);
+          state.groupsRows.splice(i, 1);
+          saveState(state);
+          renderGroupsTable(state.groupsRows);
+        });
+      });
+    }
+
+    $("#addRowBtn").addEventListener("click", () => {
+      state.groupsRows.push({ name:"NEU", rate:"", market:"", proforma:"NO", payment:"", foc:"", breakfast:"", link:"" });
+      saveState(state);
+      renderGroupsTable(state.groupsRows);
+    });
+    $("#saveTableBtn").addEventListener("click", () => { saveState(state); alert("Tabelle gespeichert ✅"); });
+
+    /* -------------------------- Link lists --------------------------- */
+    function renderLinkList(containerId, listKey){
+      const wrap = document.getElementById(containerId);
+      wrap.innerHTML = "";
+      const items = state.linkLists[listKey] || [];
+
+      items.forEach((it, idx) => {
+        const div = document.createElement("div");
+        div.className = "listItem";
+        const pill = it.attachment ? renderAttachmentPill(it.attachment) : `<span class="muted" style="font-size:12px;">—</span>`;
+        div.innerHTML = `
+          <span style="display:flex; flex-direction:column; gap:6px;">
+            <span>${escapeHtml(it.title || "Ohne Titel")}</span>
+            <small>${escapeHtml(it.note || "")}</small>
+          </span>
+          <span style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+            ${pill}
+            <small style="color:rgba(107,114,128,.95); font-weight:800;">Klick = bearbeiten</small>
+          </span>
+        `;
+        div.addEventListener("click", () => editLinkItem(listKey, idx));
+        wrap.appendChild(div);
+      });
+
+      if(items.length === 0){
+        wrap.innerHTML = `<div class="muted" style="font-size:13px;">Noch keine Einträge. Klicke auf „+ Link“.</div>`;
+      }
+    }
+
+    async function pickFile(){
+      return new Promise((resolve) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".pdf,.xls,.xlsx,.csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv";
+        input.style.display = "none";
+        document.body.appendChild(input);
+        input.addEventListener("change", () => {
+          const f = input.files?.[0] || null;
+          document.body.removeChild(input);
+          resolve(f);
+        });
+        input.click();
+      });
+    }
+
+    async function editLinkItem(listKey, idx){
+      const it = state.linkLists[listKey][idx];
+
+      const title = prompt("Titel:", it.title ?? "");
+      if(title === null) return;
+
+      const note = prompt("Link / Notiz (z.B. URL):", it.note ?? "");
+      if(note === null) return;
+
+      it.title = title.trim();
+      it.note  = note.trim();
+
+      const action = prompt(
+        "Dokument-Aktion:\n" +
+        "1 = Öffnen\n" +
+        "2 = Download\n" +
+        "3 = Upload/Ersetzen\n" +
+        "4 = Entfernen\n" +
+        "Enter = nichts",
+        ""
+      );
+
+      if(action === "1"){
+        if(!it.attachment) alert("Kein Dokument hinterlegt.");
+        else openAttachment(it.attachment);
+      }else if(action === "2"){
+        if(!it.attachment) alert("Kein Dokument hinterlegt.");
+        else downloadAttachment(it.attachment);
+      }else if(action === "3"){
+        const file = await pickFile();
+        if(file){
+          try{ it.attachment = await fileToAttachment(file); }
+          catch(e){ alert("Upload fehlgeschlagen."); }
+        }
+      }else if(action === "4"){
+        it.attachment = null;
+      }
+
+      const del = confirm("Eintrag speichern. OK = löschen / Abbrechen = behalten");
+      if(del){
+        state.linkLists[listKey].splice(idx, 1);
+      }
+      saveState(state);
+      rerenderAll();
+    }
+
+    function addLinkItem(listKey){
+      state.linkLists[listKey] = state.linkLists[listKey] || [];
+      state.linkLists[listKey].unshift({ title:"Neuer Eintrag", note:"Link/Notiz", attachment:null });
+      saveState(state);
+      rerenderAll();
+    }
+
+    $$("[data-additem]").forEach(b => {
+      b.addEventListener("click", () => addLinkItem(b.dataset.additem));
+    });
+
+    /* -------------------------- Notes boxes --------------------------- */
+    function noteBox(label, value, onDelete){
+      const box = document.createElement("div");
+      box.className = "note";
+      box.innerHTML = `
+        <div class="label">
+          <span>${escapeHtml(label)}</span>
+          <button class="tinyBtn">Löschen</button>
+        </div>
+        <div class="content" contenteditable="true"></div>
+      `;
+      const content = $(".content", box);
+      content.innerText = value || "";
+
+      content.addEventListener("input", () => {
+        box.dispatchEvent(new CustomEvent("notechange", { detail: content.innerText }));
+      });
+
+      const delBtn = $("button.tinyBtn", box);
+      delBtn.addEventListener("click", () => onDelete?.());
+
+      return box;
+    }
+
+    function renderNotes(gridEl, key){
+      gridEl.innerHTML = "";
+      const arr = state.notes[key] || [];
+      arr.forEach((n, idx) => {
+        const b = noteBox(n.title || `Feld ${idx+1}`, n.text, () => {
+          state.notes[key].splice(idx, 1);
+          saveState(state);
+          rerenderAll();
+        });
+
+        b.addEventListener("notechange", (e) => {
+          state.notes[key][idx].text = e.detail;
+          saveState(state);
+        });
+
+        const labelSpan = $(".label span", b);
+        labelSpan.title = "Doppelklick zum Umbenennen";
+        labelSpan.addEventListener("dblclick", () => {
+          const t = prompt("Titel ändern:", state.notes[key][idx].title || "");
+          if(t === null) return;
+          state.notes[key][idx].title = t.trim() || state.notes[key][idx].title;
+          saveState(state);
+          rerenderAll();
+        });
+
+        gridEl.appendChild(b);
+      });
+
+      if(arr.length === 0){
+        gridEl.innerHTML = `<div class="muted" style="font-size:13px;">Noch keine Felder. Nutze „+ …“.</div>`;
+      }
+    }
+
+    function addNote(key, defaultTitle="Neues Feld"){
+      state.notes[key] = state.notes[key] || [];
+      state.notes[key].unshift({ title: defaultTitle, text: "" });
+      saveState(state);
+      rerenderAll();
+    }
+
+    function renderListsFormsNotes(){
+      const left = $("#lfNotesLeft");
+      const right = $("#lfNotesRight");
+      const arr = state.notes.listsForms || [];
+      left.innerHTML = "";
+      right.innerHTML = "";
+
+      if(arr.length === 0){
+        left.innerHTML = `<div class="muted" style="font-size:13px;">Noch keine Felder. Klicke „+ Notizbox“.</div>`;
+        return;
+      }
+
+      arr.forEach((n, idx) => {
+        const target = (idx % 2 === 0) ? left : right;
+        const b = noteBox(n.title || `Feld ${idx+1}`, n.text, () => {
+          state.notes.listsForms.splice(idx, 1);
+          saveState(state);
+          rerenderAll();
+        });
+
+        b.addEventListener("notechange", (e) => {
+          state.notes.listsForms[idx].text = e.detail;
+          saveState(state);
+        });
+
+        const labelSpan = $(".label span", b);
+        labelSpan.addEventListener("dblclick", () => {
+          const t = prompt("Titel ändern:", state.notes.listsForms[idx].title || "");
+          if(t === null) return;
+          state.notes.listsForms[idx].title = t.trim() || state.notes.listsForms[idx].title;
+          saveState(state);
+          rerenderAll();
+        });
+
+        target.appendChild(b);
+      });
+    }
+
+    /* -------------------------- TODO --------------------------- */
+    function renderTodo(){
+      const wrap = $("#todoList");
+      wrap.innerHTML = "";
+      const items = state.todo || [];
+
+      if(items.length === 0){
+        wrap.innerHTML = `<div class="muted" style="font-size:13px;">Noch keine Tasks. Klicke „+ Task“.</div>`;
+        return;
+      }
+
+      items.forEach((t, idx) => {
+        const row = document.createElement("div");
+        row.className = "listItem";
+        row.style.cursor = "default";
+        row.innerHTML = `
+          <span style="display:flex; gap:10px; align-items:center;">
+            <input type="checkbox" ${t.done ? "checked" : ""} />
+            <span contenteditable="true" style="font-weight:900; outline:none;">${escapeHtml(t.text)}</span>
+          </span>
+          <button class="tinyBtn">Löschen</button>
+        `;
+
+        const cb = $("input", row);
+        cb.addEventListener("change", () => {
+          state.todo[idx].done = cb.checked;
+          saveState(state);
+        });
+
+        const txt = row.querySelectorAll("span")[1];
+        txt.addEventListener("input", () => {
+          state.todo[idx].text = txt.innerText.trim();
+          saveState(state);
+        });
+
+        const del = $("button.tinyBtn", row);
+        del.addEventListener("click", () => {
+          state.todo.splice(idx, 1);
+          saveState(state);
+          renderTodo();
+        });
+
+        wrap.appendChild(row);
+      });
+    }
+
+    $("#addTodo").addEventListener("click", () => {
+      state.todo.unshift({ text:"Neue Aufgabe", done:false });
+      saveState(state);
+      renderTodo();
+    });
+    $("#saveTodo").addEventListener("click", () => { saveState(state); alert("ToDo gespeichert ✅"); });
+
+    /* -------------------------- Checklists --------------------------- */
+    function renderChecklists(){
+      const wrap = $("#checklistsWrap");
+      wrap.innerHTML = "";
+
+      const lists = state.checklists || [];
+      if(lists.length === 0){
+        wrap.innerHTML = `<div class="muted" style="font-size:13px;">Noch keine Checklisten. Klicke „+ Checklist“.</div>`;
+        return;
+      }
+
+      lists.forEach((cl, cidx) => {
+        const card = document.createElement("div");
+        card.className = "note";
+        card.innerHTML = `
+          <div class="label">
+            <span>${escapeHtml(cl.title || "Checklist")}</span>
+            <div style="display:flex; gap:6px;">
+              <button class="tinyBtn" data-additem>+ Punkt</button>
+              <button class="tinyBtn" data-del>Delete</button>
+            </div>
+          </div>
+          <div class="content" style="background:#fff; border:1px solid #f0e1f0;"></div>
+        `;
+
+        const titleSpan = $(".label span", card);
+        titleSpan.title = "Doppelklick zum Umbenennen";
+        titleSpan.addEventListener("dblclick", () => {
+          const t = prompt("Titel:", cl.title || "");
+          if(t === null) return;
+          state.checklists[cidx].title = t.trim() || state.checklists[cidx].title;
+          saveState(state);
+          rerenderAll();
+        });
+
+        const content = $(".content", card);
+        content.contentEditable = "false";
+        content.innerHTML = "";
+
+        cl.items.forEach((it, iidx) => {
+          const row = document.createElement("div");
+          row.className = "listItem";
+          row.style.cursor = "default";
+          row.innerHTML = `
+            <span style="display:flex; gap:10px; align-items:center;">
+              <input type="checkbox" ${it.done ? "checked" : ""} />
+              <span contenteditable="true" style="font-weight:900; outline:none;">${escapeHtml(it.text)}</span>
+            </span>
+            <button class="tinyBtn">X</button>
+          `;
+
+          const cb = $("input", row);
+          cb.addEventListener("change", () => {
+            state.checklists[cidx].items[iidx].done = cb.checked;
+            saveState(state);
+          });
+
+          const txt = row.querySelectorAll("span")[1];
+          txt.addEventListener("input", () => {
+            state.checklists[cidx].items[iidx].text = txt.innerText.trim();
+            saveState(state);
+          });
+
+          const del = $("button.tinyBtn", row);
+          del.addEventListener("click", () => {
+            state.checklists[cidx].items.splice(iidx, 1);
+            saveState(state);
+            renderChecklists();
+          });
+
+          content.appendChild(row);
+        });
+
+        $("[data-additem]", card).addEventListener("click", () => {
+          state.checklists[cidx].items.unshift({ text:"Neuer Punkt", done:false });
+          saveState(state);
+          renderChecklists();
+        });
+
+        $("[data-del]", card).addEventListener("click", () => {
+          if(confirm("Checklist wirklich löschen?")){
+            state.checklists.splice(cidx, 1);
+            saveState(state);
+            renderChecklists();
+          }
+        });
+
+        wrap.appendChild(card);
+      });
+    }
+
+    $("#addChecklist").addEventListener("click", () => {
+      state.checklists.unshift({ title:"Neue Checklist", items:[{text:"Neuer Punkt", done:false}] });
+      saveState(state);
+      renderChecklists();
+    });
+    $("#saveChecklists").addEventListener("click", () => { saveState(state); alert("Checklisten gespeichert ✅"); });
+
+    /* -------------------------- Buttons for notes sections --------------------------- */
+    $("#addNoteLF").addEventListener("click", () => addNote("listsForms", "Neues Feld"));
+    $("#saveLF").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
+
+    $("#addReportBox").addEventListener("click", () => addNote("reports", "Bericht Feld"));
+    $("#saveReports").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
+
+    $("#addHandover").addEventListener("click", () => addNote("handover", "Übergabe Punkt"));
+    $("#saveHandover").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
+
+    $("#addContacts").addEventListener("click", () => addNote("contacts", "Kontakt"));
+    $("#saveContacts").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
+
+    $("#addTodoNote").addEventListener("click", () => addNote("todoNotes", "Notiz"));
+    $("#saveTodoNote").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
+
+    $("#addFreeField").addEventListener("click", () => addNote("freeFields", "Freies Feld"));
+    $("#saveFreeFields").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
+
+    /* -------------------------- Global search --------------------------- */
+    $("#globalSearch").addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const rows = $$("#groupsTable tbody tr");
+      rows.forEach(tr => {
+        const txt = tr.innerText.toLowerCase();
+        tr.style.display = (!q || txt.includes(q)) ? "" : "none";
+      });
+    });
+
+    /* -------------------------- Reset --------------------------- */
+    $("#resetBtn").addEventListener("click", () => {
+      if(!confirm("Wirklich alles löschen?")) return;
+      localStorage.removeItem(KEY);
+      state = structuredClone(DEFAULT);
+      saveState(state);
+      rerenderAll();
+    });
+
+    /* -------------------------- Calendar --------------------------- */
+    const WEEKDAYS = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+    const MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+
+    const CAL_CATEGORIES = [
+      { key:"none",    label:"(keine)",      color:"#ffffff" },
+      { key:"event",   label:"Event",        color:"#f7d6ea" },
+      { key:"dead",    label:"Deadline",     color:"#ffd6d6" },
+      { key:"team",    label:"Team",         color:"#e7dcff" },
+      { key:"booking", label:"Buchung Info", color:"#dbeafe" }
+    ];
+
+    const SYSTEM_ITEMS = [
+      { date:"2026-01-01", type:"holiday", title:"Neujahrstag", impact:"hoch", icon:"🎆" },
+      { date:"2026-01-02", type:"holiday", title:"Berchtoldstag", impact:"mittel" },
+      { date:"2026-01-06", type:"holiday", title:"Heilige Drei Könige", impact:"mittel" },
+      { date:"2026-01-10", type:"city", title:"Gymotion", impact:"mittel" },
+      { date:"2026-01-21", type:"city", title:"Dr. Jorand Petterson", impact:"mittel" },
+      { date:"2026-01-23", type:"city", title:"Bushido", impact:"mittel" },
+      { date:"2026-01-25", type:"city", title:"Apache 207", impact:"mittel" },
+      { date:"2026-02-14", type:"hotel", title:"Valentinstag", impact:"hoch", icon:"❤️" },
+      { date:"2026-02-14", type:"city", title:"Master of Dirts", impact:"mittel" },
+      { date:"2026-02-26", type:"city", title:"Art on Ice", impact:"mittel" },
+      { date:"2026-03-01", type:"city", title:"Art on Ice", impact:"mittel" },
+      { date:"2026-03-05", type:"city", title:"Jason Derulo", impact:"mittel" },
+      { date:"2026-03-07", type:"city", title:"Mario Barth", impact:"mittel" },
+      { date:"2026-03-08", type:"holiday", title:"Josefstag", impact:"mittel" },
+      { date:"2026-03-08", type:"city", title:"Playstation concert", impact:"mittel" },
+      { date:"2026-03-13", type:"city", title:"Lord of ring", impact:"mittel" },
+      { date:"2026-03-16", type:"city", title:"Eros Ramazzoti", impact:"mittel" },
+      { date:"2026-03-21", type:"city", title:"Kraftklub", impact:"mittel" },
+      { date:"2026-03-28", type:"city", title:"Country festival", impact:"hoch" },
+      { date:"2026-03-29", type:"city", title:"Country festival", impact:"hoch" },
+      { date:"2026-04-03", type:"holiday", title:"Karfreitag", impact:"mittel" },
+      { date:"2026-04-06", type:"holiday", title:"Ostermontag", impact:"mittel" },
+      { date:"2026-04-12", type:"city", title:"Zürich Marathon", impact:"hoch", icon:"🏃" },
+      { date:"2026-04-18", type:"city", title:"Saturday night fever", impact:"mittel" },
+      { date:"2026-04-20", type:"holiday", title:"Sechseläuten", impact:"hoch" },
+      { date:"2026-05-01", type:"holiday", title:"Tag der Arbeit", impact:"mittel" },
+      { date:"2026-05-10", type:"hotel", title:"Muttertag", impact:"hoch", icon:"🌷" },
+      { date:"2026-05-14", type:"holiday", title:"Auffahrt", impact:"hoch" },
+      { date:"2026-05-25", type:"holiday", title:"Pfingstmontag", impact:"hoch" },
+      { date:"2026-06-05", type:"city", title:"Zurich openair", impact:"hoch" },
+      { date:"2026-06-06", type:"city", title:"Zurich openair", impact:"hoch" },
+      { date:"2026-06-07", type:"city", title:"Zurich openair", impact:"hoch" },
+      { date:"2026-06-18", type:"city", title:"Andreas Gabalier", impact:"mittel" },
+      { date:"2026-06-19", type:"city", title:"Andreas Gabalier", impact:"mittel" },
+      { date:"2026-06-26", type:"city", title:"Slipknot", impact:"mittel" },
+      { date:"2026-07-04", type:"city", title:"Sea you", impact:"mittel" },
+      { date:"2026-07-10", type:"city", title:"Openair frauenfeld", impact:"hoch" },
+      { date:"2026-07-11", type:"city", title:"Openair frauenfeld", impact:"hoch" },
+      { date:"2026-07-12", type:"city", title:"Openair frauenfeld", impact:"hoch" },
+      { date:"2026-07-14", type:"city", title:"Nemo", impact:"mittel" },
+      { date:"2026-07-24", type:"city", title:"Tate MCrae", impact:"mittel" },
+      { date:"2026-07-25", type:"city", title:"Seiler und Speer", impact:"mittel" },
+      { date:"2026-08-01", type:"holiday", title:"Bundesfeier", impact:"hoch" },
+      { date:"2026-08-08", type:"city", title:"Street Parade", impact:"hoch", icon:"🎉" },
+      { date:"2026-08-15", type:"holiday", title:"Maria Himmelfahrt", impact:"mittel" },
+      { date:"2026-08-23", type:"city", title:"Celine Dion", impact:"mittel" },
+      { date:"2026-09-05", type:"city", title:"Evanescence", impact:"mittel" },
+      { date:"2026-09-12", type:"holiday", title:"Knabenschiessen (Start)", impact:"hoch" },
+      { date:"2026-09-13", type:"holiday", title:"Knabenschiessen", impact:"hoch" },
+      { date:"2026-09-14", type:"holiday", title:"Knabenschiessen (Ende)", impact:"hoch" },
+      { date:"2026-10-02", type:"city", title:"Unheilig", impact:"mittel" },
+      { date:"2026-10-31", type:"city", title:"Halloween party", impact:"hoch" },
+      { date:"2026-11-01", type:"holiday", title:"Allerheiligen", impact:"mittel" },
+      { date:"2026-11-06", type:"city", title:"Chris Brown", impact:"mittel" },
+      { date:"2026-12-24", type:"city", title:"Weihnachtsabend", impact:"hoch", icon:"🎄" },
+      { date:"2026-12-25", type:"holiday", title:"Weihnachtstag", impact:"mittel", icon:"🎄" },
+      { date:"2026-12-26", type:"holiday", title:"Stephanstag", impact:"mittel" }
+    ];
+
+    function badgeStyle(item){
+      const base = { dot:"#111827", bg:"rgba(255,255,255,.75)", border:"rgba(17,24,39,.10)" };
+
+      if(item.type === "holiday"){
+        base.dot = "#c02678";
+        base.bg  = "rgba(246,231,240,.85)";
+        base.border = "rgba(192,38,120,.20)";
+      }else if(item.type === "hotel"){
+        base.dot = "#f59e0b";
+        base.bg  = "rgba(255, 243, 204, .92)";
+        base.border = "rgba(245,158,11,.30)";
+      }else{
+        base.dot = "#7c3aed";
+        base.bg  = "rgba(237,233,254,.85)";
+        base.border = "rgba(124,58,237,.18)";
+      }
+
+      if(item.impact === "hoch"){
+        base.border = "rgba(17,24,39,.22)";
+      }
+      return base;
+    }
+
+    let calMonth = new Date().getMonth();
+    let calYear  = new Date().getFullYear();
+
+    function isoDate(y,m,d){
+      const mm = String(m+1).padStart(2,"0");
+      const dd = String(d).padStart(2,"0");
+      return `${y}-${mm}-${dd}`;
+    }
+
+    function ensureCalendar(){
+      if(!state.calendar) state.calendar = { entries:{}, settings:{ showCityEvents:true, showHolidays:true } };
+      if(!state.calendar.entries) state.calendar.entries = {};
+      if(!state.calendar.settings) state.calendar.settings = { showCityEvents:true, showHolidays:true };
+    }
+
+    function getEntry(key){
+      return state.calendar.entries[key] || { cat:"none", note:"" };
+    }
+    function setEntry(key, entry){
+      state.calendar.entries[key] = entry;
+      saveState(state);
+    }
+
+    function systemItemsForDate(dateKey){
+      const showCity = !!state.calendar.settings.showCityEvents;
+      const showHol  = !!state.calendar.settings.showHolidays;
+
+      return SYSTEM_ITEMS.filter(it => {
+        if(it.date !== dateKey) return false;
+        if(it.type === "hotel") return true;
+        if(it.type === "city" && !showCity) return false;
+        if(it.type === "holiday" && !showHol) return false;
+        return true;
+      });
+    }
+
+    let calendarControlsBound = false;
+    function buildCalendarControlsOnce(){
+      if(calendarControlsBound) return;
+      calendarControlsBound = true;
+
+      $("#calMonth").innerHTML = MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+      const years = [];
+      for(let y = calYear - 5; y <= calYear + 5; y++) years.push(y);
+      $("#calYear").innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join("");
+
+      $("#calMonth").addEventListener("change", () => { calMonth = Number($("#calMonth").value); renderCalendar(); });
+      $("#calYear").addEventListener("change", () => { calYear = Number($("#calYear").value); renderCalendar(); });
+
+      $("#calTodayBtn").addEventListener("click", () => {
+        const now = new Date();
+        calMonth = now.getMonth();
+        calYear = now.getFullYear();
+        renderCalendar();
+      });
+
+      $("#calSaveBtn").addEventListener("click", () => { saveState(state); alert("Kalender gespeichert ✅"); });
+
+      $("#calClearMonthBtn").addEventListener("click", () => {
+        if(!confirm("Wirklich alle Einträge dieses Monats löschen?")) return;
+        const prefix = `${calYear}-${String(calMonth+1).padStart(2,"0")}-`;
+        Object.keys(state.calendar.entries).forEach(k => { if(k.startsWith(prefix)) delete state.calendar.entries[k]; });
+        saveState(state);
+        renderCalendar();
+      });
+
+      $("#toggleCityEvents").addEventListener("change", () => {
+        state.calendar.settings.showCityEvents = $("#toggleCityEvents").checked;
+        saveState(state);
+        renderCalendar();
+      });
+      $("#toggleHolidays").addEventListener("change", () => {
+        state.calendar.settings.showHolidays = $("#toggleHolidays").checked;
+        saveState(state);
+        renderCalendar();
+      });
+    }
+
+    function renderCalendar(){
+      ensureCalendar();
+
+      $("#calMonth").value = calMonth;
+      $("#calYear").value = calYear;
+
+      $("#toggleCityEvents").checked = !!state.calendar.settings.showCityEvents;
+      $("#toggleHolidays").checked = !!state.calendar.settings.showHolidays;
+
+      $("#calWeekdays").innerHTML = WEEKDAYS.map(d=>`<div>${d}</div>`).join("");
+      const daysWrap = $("#calDays");
+      daysWrap.innerHTML = "";
+
+      const first = new Date(calYear, calMonth, 1);
+      let startDay = first.getDay();
+      startDay = (startDay === 0) ? 7 : startDay;
+      const leadingBlanks = startDay - 1;
+
+      const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+      const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+      const totalCells = 42;
+
+      const today = new Date();
+      const isThisMonth = (today.getFullYear()===calYear && today.getMonth()===calMonth);
+
+      for(let cell=0; cell<totalCells; cell++){
+        const box = document.createElement("div");
+        box.className = "dayCell";
+
+        let dayNum, inMonth = true, y=calYear, m=calMonth;
+
+        if(cell < leadingBlanks){
+          inMonth = false;
+          dayNum = prevMonthDays - (leadingBlanks - 1 - cell);
+          m = calMonth - 1;
+          if(m < 0){ m = 11; y = calYear - 1; }
+        }else if(cell >= leadingBlanks + daysInMonth){
+          inMonth = false;
+          dayNum = (cell - (leadingBlanks + daysInMonth)) + 1;
+          m = calMonth + 1;
+          if(m > 11){ m = 0; y = calYear + 1; }
+        }else{
+          dayNum = (cell - leadingBlanks) + 1;
+        }
+
+        const key = isoDate(y,m,dayNum);
+        const entry = getEntry(key);
+        const cat = CAL_CATEGORIES.find(c => c.key === entry.cat) || CAL_CATEGORIES[0];
+
+        if(inMonth && isThisMonth && dayNum === today.getDate()){
+          box.classList.add("todayRing");
+        }
+
+        const top = document.createElement("div");
+        top.className = "dayTop";
+        top.innerHTML = `
+          <div class="dayNum ${inMonth ? "" : "muted"}">${dayNum}</div>
+          <div class="colorDot" style="background:${cat.color};"></div>
+        `;
+
+        const sysWrap = document.createElement("div");
+        sysWrap.className = "sysBadges";
+        const sysItems = systemItemsForDate(key);
+        if(sysItems.length){
+          sysItems.slice(0, 5).forEach(it => {
+            const s = badgeStyle(it);
+            const b = document.createElement("div");
+            b.className = "badge";
+            b.title = it.title + (it.impact ? ` (Impact: ${it.impact})` : "");
+            b.style.background = s.bg;
+            b.style.borderColor = s.border;
+            const emoji = it.icon ? `<span class="emoji">${escapeHtml(it.icon)}</span>` : "";
+            b.innerHTML = `<span class="dot" style="background:${s.dot};"></span>${emoji}<span>${escapeHtml(it.title)}</span>`;
+            sysWrap.appendChild(b);
+          });
+        }
+
+        const note = document.createElement("textarea");
+        note.className = "dayNote";
+        note.placeholder = "Wichtige Info… (URLs mit Ctrl/⌘/Alt+Klick öffnen)";
+        note.value = entry.note || "";
+
+        const footer = document.createElement("div");
+        footer.className = "dayFooter";
+
+        const select = document.createElement("select");
+        select.className = "catSelect";
+        select.innerHTML = CAL_CATEGORIES.map(c => `<option value="${c.key}">${c.label}</option>`).join("");
+        select.value = entry.cat || "none";
+        footer.appendChild(select);
+
+        box.style.background = (select.value !== "none") ? cat.color : "#fff";
+
+        select.addEventListener("change", () => {
+          const newCat = select.value;
+          const cc = CAL_CATEGORIES.find(c => c.key === newCat) || CAL_CATEGORIES[0];
+          box.querySelector(".colorDot").style.background = cc.color;
+          box.style.background = (newCat !== "none") ? cc.color : "#fff";
+          setEntry(key, { cat:newCat, note: note.value });
+        });
+
+        note.addEventListener("input", () => {
+          setEntry(key, { cat: select.value, note: note.value });
+        });
+
+        box.appendChild(top);
+        if(sysItems.length) box.appendChild(sysWrap);
+        box.appendChild(note);
+        box.appendChild(footer);
+        daysWrap.appendChild(box);
+      }
+    }
+
+    /* -------------------------- Calendar FIT --------------------------- */
+    let fitMonth = new Date().getMonth();
+    let fitYear  = new Date().getFullYear();
+
+    function ensureCalendarFit(){
+      if(!state.calendarFit) state.calendarFit = { entries:{} };
+      if(!state.calendarFit.entries) state.calendarFit.entries = {};
+    }
+
+    function normalizeFitEntry(e){
+      const base = {
+        abreu:false,
+        travco:false,
+        abreuClosed:false,
+        travcoClosed:false
+      };
+      if(!e) return base;
+
+      if(typeof e.closed === "boolean"){
+        base.abreuClosed = e.closed;
+        base.travcoClosed = e.closed;
+      }
+
+      if(typeof e.abreu === "boolean") base.abreu = e.abreu;
+      if(typeof e.travco === "boolean") base.travco = e.travco;
+      if(typeof e.abreuClosed === "boolean") base.abreuClosed = e.abreuClosed;
+      if(typeof e.travcoClosed === "boolean") base.travcoClosed = e.travcoClosed;
+
+      return base;
+    }
+
+    function getFitEntry(key){
+      return normalizeFitEntry(state.calendarFit.entries[key]);
+    }
+    function setFitEntry(key, entry){
+      state.calendarFit.entries[key] = entry;
+      saveState(state);
+    }
+
+    function fitBgFor(entry){
+      if(entry.abreuClosed && entry.travcoClosed) return "rgba(224, 224, 232, .88)";
+      if(entry.abreuClosed) return "rgba(236, 220, 214, .90)";
+      if(entry.travcoClosed) return "rgba(214, 234, 224, .90)";
+      if(entry.abreu) return "rgba(255, 229, 214, .85)";
+      if(entry.travco) return "rgba(216, 247, 231, .85)";
+      return "#fff";
+    }
+
+    let fitControlsBound = false;
+    function buildFitCalendarControlsOnce(){
+      if(fitControlsBound) return;
+      fitControlsBound = true;
+
+      $("#fitMonth").innerHTML = MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+      const years = [];
+      const baseY = new Date().getFullYear();
+      for(let y = baseY - 5; y <= baseY + 5; y++) years.push(y);
+      $("#fitYear").innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join("");
+
+      $("#fitMonth").addEventListener("change", () => { fitMonth = Number($("#fitMonth").value); renderFitCalendar(); });
+      $("#fitYear").addEventListener("change", () => { fitYear  = Number($("#fitYear").value);  renderFitCalendar(); });
+
+      $("#fitTodayBtn").addEventListener("click", () => {
+        const now = new Date();
+        fitMonth = now.getMonth();
+        fitYear  = now.getFullYear();
+        renderFitCalendar();
+      });
+
+      $("#fitSaveBtn").addEventListener("click", () => { saveState(state); alert("Kalender FIT gespeichert ✅"); });
+
+      $("#fitClearMonthBtn").addEventListener("click", () => {
+        if(!confirm("Wirklich alle FIT-Markierungen dieses Monats löschen?")) return;
+        ensureCalendarFit();
+        const prefix = `${fitYear}-${String(fitMonth+1).padStart(2,"0")}-`;
+        Object.keys(state.calendarFit.entries).forEach(k => { if(k.startsWith(prefix)) delete state.calendarFit.entries[k]; });
+        saveState(state);
+        renderFitCalendar();
+      });
+    }
+
+    function renderFitCalendar(){
+      ensureCalendarFit();
+
+      $("#fitMonth").value = fitMonth;
+      $("#fitYear").value  = fitYear;
+
+      $("#fitWeekdays").innerHTML = WEEKDAYS.map(d=>`<div>${d}</div>`).join("");
+      const daysWrap = $("#fitDays");
+      daysWrap.innerHTML = "";
+
+      const first = new Date(fitYear, fitMonth, 1);
+      let startDay = first.getDay();
+      startDay = (startDay === 0) ? 7 : startDay;
+      const leadingBlanks = startDay - 1;
+
+      const daysInMonth = new Date(fitYear, fitMonth+1, 0).getDate();
+      const prevMonthDays = new Date(fitYear, fitMonth, 0).getDate();
+      const totalCells = 42;
+
+      const today = new Date();
+      const isThisMonth = (today.getFullYear()===fitYear && today.getMonth()===fitMonth);
+
+      for(let cell=0; cell<totalCells; cell++){
+        const box = document.createElement("div");
+        box.className = "dayCell";
+
+        let dayNum, inMonth = true, y=fitYear, m=fitMonth;
+
+        if(cell < leadingBlanks){
+          inMonth = false;
+          dayNum = prevMonthDays - (leadingBlanks - 1 - cell);
+          m = fitMonth - 1;
+          if(m < 0){ m = 11; y = fitYear - 1; }
+        }else if(cell >= leadingBlanks + daysInMonth){
+          inMonth = false;
+          dayNum = (cell - (leadingBlanks + daysInMonth)) + 1;
+          m = fitMonth + 1;
+          if(m > 11){ m = 0; y = fitYear + 1; }
+        }else{
+          dayNum = (cell - leadingBlanks) + 1;
+        }
+
+        const key = isoDate(y,m,dayNum);
+        const entry = getFitEntry(key);
+
+        if(inMonth && isThisMonth && dayNum === today.getDate()){
+          box.classList.add("todayRing");
+        }
+
+        const top = document.createElement("div");
+        top.className = "dayTop";
+        top.innerHTML = `
+          <div class="dayNum ${inMonth ? "" : "muted"}">${dayNum}</div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <div class="colorDot" title="Abreu ✓" style="background:${entry.abreu ? "rgba(255, 229, 214, .95)" : "#fff"};"></div>
+            <div class="colorDot" title="Travco ✓" style="background:${entry.travco ? "rgba(216, 247, 231, .95)" : "#fff"};"></div>
+            <div class="colorDot" title="Closed Abreu" style="background:${entry.abreuClosed ? "rgba(236, 220, 214, .95)" : "#fff"};"></div>
+            <div class="colorDot" title="Closed Travco" style="background:${entry.travcoClosed ? "rgba(214, 234, 224, .95)" : "#fff"};"></div>
+          </div>
+        `;
+
+        const sysWrap = document.createElement("div");
+        sysWrap.className = "sysBadges";
+
+        if(entry.abreu){
+          const b = document.createElement("div");
+          b.className = "badge";
+          b.style.background = "rgba(255, 229, 214, .85)";
+          b.style.borderColor = "rgba(233, 120, 72, .25)";
+          b.innerHTML = `<span class="dot" style="background:#e97848;"></span><span>Abreu ✓</span>`;
+          sysWrap.appendChild(b);
+        }
+        if(entry.travco){
+          const b = document.createElement("div");
+          b.className = "badge";
+          b.style.background = "rgba(216, 247, 231, .85)";
+          b.style.borderColor = "rgba(22, 163, 74, .20)";
+          b.innerHTML = `<span class="dot" style="background:#16a34a;"></span><span>Travco ✓</span>`;
+          sysWrap.appendChild(b);
+        }
+        if(entry.abreuClosed){
+          const b = document.createElement("div");
+          b.className = "badge";
+          b.style.background = "rgba(236, 220, 214, .90)";
+          b.style.borderColor = "rgba(17,24,39,.22)";
+          b.innerHTML = `<span class="dot" style="background:#111827;"></span><span>Closed Abreu</span>`;
+          sysWrap.appendChild(b);
+        }
+        if(entry.travcoClosed){
+          const b = document.createElement("div");
+          b.className = "badge";
+          b.style.background = "rgba(214, 234, 224, .90)";
+          b.style.borderColor = "rgba(17,24,39,.22)";
+          b.innerHTML = `<span class="dot" style="background:#111827;"></span><span>Closed Travco</span>`;
+          sysWrap.appendChild(b);
+        }
+
+        const footer = document.createElement("div");
+        footer.className = "fitDayFooter";
+
+        const checks = document.createElement("div");
+        checks.className = "fitChecks";
+
+        const ab = document.createElement("label");
+        ab.className = "fitCheck fit-abreu";
+        ab.innerHTML = `<input type="checkbox" ${entry.abreu ? "checked" : ""} /> Abreu`;
+
+        const tr = document.createElement("label");
+        tr.className = "fitCheck fit-travco";
+        tr.innerHTML = `<input type="checkbox" ${entry.travco ? "checked" : ""} /> Travco`;
+
+        const abC = document.createElement("label");
+        abC.className = "fitCheck fit-abreuClosed";
+        abC.innerHTML = `<input type="checkbox" ${entry.abreuClosed ? "checked" : ""} /> Closed Abreu`;
+
+        const trC = document.createElement("label");
+        trC.className = "fitCheck fit-travcoClosed";
+        trC.innerHTML = `<input type="checkbox" ${entry.travcoClosed ? "checked" : ""} /> Closed Travco`;
+
+        checks.appendChild(ab);
+        checks.appendChild(tr);
+        checks.appendChild(abC);
+        checks.appendChild(trC);
+        footer.appendChild(checks);
+
+        box.style.background = fitBgFor(entry);
+
+        const abCb = ab.querySelector("input");
+        const trCb = tr.querySelector("input");
+        const abCCb = abC.querySelector("input");
+        const trCCb = trC.querySelector("input");
+
+        const commit = () => {
+          const updated = {
+            abreu: abCb.checked,
+            travco: trCb.checked,
+            abreuClosed: abCCb.checked,
+            travcoClosed: trCCb.checked
+          };
+          setFitEntry(key, updated);
+          renderFitCalendar();
+        };
+
+        abCb.addEventListener("change", commit);
+        trCb.addEventListener("change", commit);
+        abCCb.addEventListener("change", commit);
+        trCCb.addEventListener("change", commit);
+
+        box.appendChild(top);
+        if(entry.abreu || entry.travco || entry.abreuClosed || entry.travcoClosed) box.appendChild(sysWrap);
+        box.appendChild(footer);
+        daysWrap.appendChild(box);
+      }
+    }
+
+    /* -------------------------- RESA Buch (A–Z) --------------------------- */
+    const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    function ensureResaBook(){
+      if(!state.resaBook) state.resaBook = { rows: [{ letter:"A", text:"", link:"" }] };
+      if(!Array.isArray(state.resaBook.rows)) state.resaBook.rows = [{ letter:"A", text:"", link:"" }];
+    }
+
+    function nextAvailableLetter(){
+      ensureResaBook();
+      const used = new Set(state.resaBook.rows.map(r => (r.letter||"").toUpperCase()));
+      return LETTERS.find(L => !used.has(L)) || null;
+    }
+
+    function sortResaRows(){
+      state.resaBook.rows.sort((a,b) => {
+        const ai = LETTERS.indexOf((a.letter||"").toUpperCase());
+        const bi = LETTERS.indexOf((b.letter||"").toUpperCase());
+        return ai - bi;
+      });
+    }
+
+    function renderResaBook(){
+      ensureResaBook();
+      sortResaRows();
+
+      const wrap = document.getElementById("resaBookWrap");
+      if(!wrap) return;
+
+      wrap.innerHTML = "";
+
+      if(state.resaBook.rows.length === 0){
+        wrap.innerHTML = `<div class="muted" style="font-size:13px;">Noch keine Einträge. Nutze „+ Zeile“.</div>`;
+        return;
+      }
+
+      state.resaBook.rows.forEach((row, idx) => {
+        const box = document.createElement("div");
+        box.className = "resaRow";
+
+        box.innerHTML = `
+          <div class="resaRowTop">
+            <span class="resaLetter">${escapeHtml(row.letter || "?")}</span>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="tinyBtn" data-resalink="${idx}" title="Link in neuem Tab öffnen">Öffnen</button>
+              <button class="tinyBtn" data-resadel="${idx}">Löschen</button>
+            </div>
+          </div>
+
+          <div class="resaFields">
+            <div>
+              <div class="resaFieldLabel">Text</div>
+              <textarea class="resaText" data-resatext="${idx}" placeholder="Text zu ${escapeHtml(row.letter || "")}… (URLs mit Ctrl/⌘/Alt+Klick öffnen)"></textarea>
+            </div>
+
+            <div>
+              <div class="resaFieldLabel">Link (vollständig)</div>
+              <input class="resaLink" data-resalinkinp="${idx}" type="url" placeholder="https://…" />
+            </div>
+          </div>
+        `;
+
+        const txt = box.querySelector(`[data-resatext="${idx}"]`);
+        const linkInp = box.querySelector(`[data-resalinkinp="${idx}"]`);
+
+        txt.value = row.text || "";
+        linkInp.value = row.link || "";
+
+        txt.addEventListener("input", () => {
+          state.resaBook.rows[idx].text = txt.value;
+          saveState(state);
+        });
+
+        linkInp.addEventListener("input", () => {
+          state.resaBook.rows[idx].link = linkInp.value.trim();
+          saveState(state);
+        });
+
+        box.querySelector(`[data-resalink="${idx}"]`).addEventListener("click", () => {
+          const url = (state.resaBook.rows[idx].link || "").trim();
+          if(!url) return alert("Kein Link hinterlegt.");
+          const full = url.startsWith("http://") || url.startsWith("https://") ? url : ("https://" + url);
+          const w = window.open(full, "_blank", "noopener,noreferrer");
+          if(!w) alert("Popup blockiert. Bitte Popups erlauben.");
+        });
+
+        box.querySelector(`[data-resadel="${idx}"]`).addEventListener("click", () => {
+          const letter = state.resaBook.rows[idx]?.letter || "?";
+          if(!confirm(`Eintrag ${letter} wirklich löschen?`)) return;
+          state.resaBook.rows.splice(idx, 1);
+          saveState(state);
+          renderResaBook();
+        });
+
+        wrap.appendChild(box);
+      });
+    }
+
+    function addResaRow(){
+      ensureResaBook();
+      const L = nextAvailableLetter();
+      if(!L) return alert("Maximal bis Z möglich.");
+      state.resaBook.rows.push({ letter:L, text:"", link:"" });
+      saveState(state);
+      renderResaBook();
+    }
+
+    $("#resaAddBtn").addEventListener("click", addResaRow);
+    $("#resaSaveBtn").addEventListener("click", () => { saveState(state); alert("RESA Buch gespeichert ✅"); });
+    $("#resaPrintBtn").addEventListener("click", () => {
+      document.body.classList.add("print-resa");
+      window.print();
+      setTimeout(() => document.body.classList.remove("print-resa"), 200);
+    });
+
+    /* -------------------------- Render all --------------------------- */
+    function rerenderAll(){
+      // normalize groups rows for link
+      state.groupsRows = (state.groupsRows || []).map(r => ({
+        name: (r?.name ?? "").toString(),
+        rate: (r?.rate ?? "").toString(),
+        market: (r?.market ?? "").toString(),
+        proforma: (r?.proforma ?? "").toString(),
+        payment: (r?.payment ?? "").toString(),
+        foc: (r?.foc ?? "").toString(),
+        breakfast: (r?.breakfast ?? "").toString(),
+        link: (r?.link ?? "").toString()
+      }));
+
+      // keep attachments in link lists (if present)
+      if(!state.linkLists) state.linkLists = structuredClone(DEFAULT.linkLists);
+      for(const k of Object.keys(state.linkLists || {})){
+        state.linkLists[k] = (state.linkLists[k] || []).map(it => ({ attachment:null, ...it }));
+      }
+
+      if(!state.calendar) state.calendar = { entries:{}, settings:{ showCityEvents:true, showHolidays:true } };
+      if(!state.calendar.entries) state.calendar.entries = {};
+      if(!state.calendar.settings) state.calendar.settings = { showCityEvents:true, showHolidays:true };
+
+      if(!state.calendarFit) state.calendarFit = { entries:{} };
+      if(!state.calendarFit.entries) state.calendarFit.entries = {};
+
+      if(!state.resaBook) state.resaBook = { rows: [{ letter:"A", text:"", link:"" }] };
+      if(!Array.isArray(state.resaBook.rows)) state.resaBook.rows = [{ letter:"A", text:"", link:"" }];
+
+      renderGroupsTable(state.groupsRows);
+
+      renderLinkList("quickLinksList", "quickLinks");
+      renderLinkList("calendarLinksList", "calendarLinks");
+
+      renderListsFormsNotes();
+      renderNotes($("#reportsNotes"), "reports");
+      renderNotes($("#handoverNotes"), "handover");
+      renderNotes($("#contactsNotes"), "contacts");
+      renderNotes($("#todoNotes"), "todoNotes");
+      renderNotes($("#freeFields"), "freeFields");
+
+      renderTodo();
+      renderChecklists();
+
+      renderResaBook();
+
+      buildCalendarControlsOnce();
+      renderCalendar();
+
+      buildFitCalendarControlsOnce();
+      renderFitCalendar();
+    }
+
+    /* Boot */
+    saveState(state);
+    rerenderAll();
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-<!doctype html>
+!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -409,6 +409,19 @@
       background:#fbf7fb;
     }
 
+    .miniStack{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .subLabel{
+      font-size:11px;
+      color:rgba(107,114,128,.95);
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.02em;
+    }
+
     /* Calendar */
     .calendarHeader{
       display:flex;
@@ -731,37 +744,36 @@
           Gruppen 2026/2027 <small>1</small>
         </button>
         <button class="navBtn" data-target="listsForms">
-          Listen & Formulare <small>2</small>
+          Links <small>2</small>
         </button>
-        <button class="navBtn" data-target="reports">
-          Berichte <small>3</small>
-        </button>
+        <!-- Berichte-Schaltfläche entfernt -->
         <button class="navBtn" data-target="handover">
-          Übergabe <small>4</small>
+          Übergabe <small>3</small>
         </button>
         <button class="navBtn" data-target="todo">
-          ToDo List <small>5</small>
+          ToDo List <small>4</small>
         </button>
         <button class="navBtn" data-target="checklists">
-          Checklisten <small>6</small>
+          Checklisten <small>5</small>
         </button>
 
         <button class="navBtn" data-target="resaBook">
-          RESA Buch <small>7</small>
+          RESA Buch <small>6</small>
         </button>
 
         <button class="navBtn" data-target="calendar">
-          Kalender <small>8</small>
+          Kalender <small>7</small>
         </button>
 
         <button class="navBtn" data-target="calendarFit">
-          Kalender FIT <small>9</small>
+          Kalender FIT <small>8</small>
         </button>
 
         <div class="hint">
           ✍️ Alle Felder sind editierbar & werden automatisch gespeichert.<br><br>
           🔗 Links öffnen: <b>Ctrl</b>/<b>⌘</b>/<b>Alt</b> + Klick in einem Textfeld (öffnet die erste URL im Text).<br><br>
-          🧾 Groups: Link-Spalte → Klick öffnet • Doppelklick bearbeitet.
+          🧾 Groups: Link-Spalte → Klick öffnet • Doppelklick bearbeitet.<br>
+          🧾 Payment: Feld ist editierbar (Text + optionaler Link).
         </div>
       </div>
     </aside>
@@ -804,7 +816,7 @@
                     <th>PAYMENT</th>
                     <th>FOC</th>
                     <th>Breakfast Rate</th>
-                    <th>LINK</th>
+                    <th>CONTRACT</th>
                     <th>Aktion</th>
                   </tr>
                 </thead>
@@ -813,7 +825,8 @@
             </div>
 
             <div class="footerHint">
-              🔗 Link: <b>Klick</b> öffnet • <b>Doppelklick</b> bearbeiten • <b>ESC</b> verwirft • <b>Enter</b> speichert.
+              🔗 Link: <b>Klick</b> öffnet • <b>Doppelklick</b> bearbeiten • <b>ESC</b> verwirft • <b>Enter</b> speichert.<br>
+              🔗 Payment: Link unten einfügen (optional) und mit „Öffnen“ starten.
             </div>
           </div>
         </div>
@@ -837,39 +850,37 @@
           </div>
         </div>
 
+
         <div class="card">
           <div class="cardHeader">
-            <h3>Quick Links</h3>
+            <h3>F &amp; B Links</h3>
+            <button class="tinyBtn" data-additem="fbLinks">+ Link</button>
+          </div>
+          <div class="cardBody">
+            <div id="fbLinksList"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <h3>Listen &amp; Formulare</h3>
+            <button class="tinyBtn" data-additem="listsFormsLinks">+ Link</button>
+          </div>
+          <div class="cardBody">
+            <div id="listsFormsLinksList"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <h3>WEB Links</h3>
             <button class="tinyBtn" data-additem="quickLinks">+ Link</button>
           </div>
           <div class="cardBody">
             <div id="quickLinksList"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- SECTION: REPORTS -->
-      <section id="reports" class="section">
-        <div class="card">
-          <div class="cardHeader">
-            <h3>Berichte</h3>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn" id="addReportBox">+ Feld</button>
-              <button class="btn" id="saveReports">Speichern</button>
+            <div class="footerHint">
+              🔗 Ctrl/⌘/Alt + Klick auf einen Eintrag öffnet die erste URL im Feld „Link/Notiz“ (oder das Dokument).
             </div>
-          </div>
-          <div class="cardBody">
-            <div class="noteGrid" id="reportsNotes"></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="cardHeader">
-            <h3>Event Kalender Links</h3>
-            <button class="tinyBtn" data-additem="calendarLinks">+ Link</button>
-          </div>
-          <div class="cardBody">
-            <div id="calendarLinksList"></div>
           </div>
         </div>
       </section>
@@ -891,9 +902,9 @@
 
         <div class="card">
           <div class="cardHeader">
-            <h3>Telefon / Kontakte</h3>
+            <h3>Notizen</h3>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn" id="addContacts">+ Kontaktfeld</button>
+              <button class="btn" id="addContacts">+ Notizbox</button>
               <button class="btn" id="saveContacts">Speichern</button>
             </div>
           </div>
@@ -1129,10 +1140,21 @@
       const type = (att?.type || "").toLowerCase();
       if(type.includes("pdf") || name.endsWith(".pdf")) return "pdf";
       if(type.includes("excel") || name.endsWith(".xls") || name.endsWith(".xlsx") || name.endsWith(".csv")) return "excel";
+      if(type.includes("powerpoint") || name.endsWith(".ppt") || name.endsWith(".pptx")) return "ppt";
       return "file";
     }
 
     function iconSvg(kind){
+      if(kind === "ppt"){
+        return `
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#d97706" d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+            <path fill="#fff" d="M14 2v6h6z"/>
+            <path fill="#fff" d="M8 10h8v1.8H8zm0 3h8v1.8H8zm0 3h6v1.8H8z"/>
+            <path fill="#fff7ed" d="M8.4 9.6h3.2c1.3 0 2.2.8 2.2 2s-.9 2-2.2 2H10.5v2.7H8.4zm2.1 1.7v.9h1.1c.4 0 .7-.2.7-.5s-.3-.4-.7-.4z"/>
+          </svg>
+        `;
+      }
       if(kind === "excel"){
         return `
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -1206,7 +1228,21 @@
       const url = (u || "").trim();
       if(!url) return "";
       return (url.startsWith("http://") || url.startsWith("https://")) ? url : ("https://" + url);
+    
+
+    function openInNewTab(url){
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      // Wichtig für lokale file:// Dashboards: Anchor-Click wird meist NICHT vom Popup-Blocker geblockt.
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return true;
     }
+
+}
 
     /* -------------------------- Link open everywhere (Ctrl/⌘/Alt + Klick) --------------------------- */
     function extractFirstUrl(text){
@@ -1270,10 +1306,10 @@
     /* -------------------------- Default state --------------------------- */
     const DEFAULT = {
       groupsRows: [
-        { name:"BUSINESS GROUPS", rate:"GPRBB", market:"OS", proforma:"YES", payment:"PREPAYMENT", foc:"ON REQUEST", breakfast:"CHF 15.00", link:"" },
-        { name:"LEISURE GROUPS",  rate:"GP1",   market:"OT", proforma:"YES", payment:"PREPAYMENT", foc:"ON REQUEST", breakfast:"CHF 13.00", link:"" },
-        { name:"EUROPE INCOMING", rate:"GP8",   market:"ST", proforma:"NO",  payment:"CL",        foc:"½ Twin ab 20 Pax", breakfast:"CHF 12.00", link:"" },
-        { name:"PANAVISION",      rate:"GP4",   market:"ST", proforma:"YES", payment:"PREPAYMENT",foc:"½ Twin ab 20 Pax", breakfast:"CHF 13.00", link:"" }
+        { name:"BUSINESS GROUPS", rate:"GPRBB", market:"OS", proforma:"YES", payment:"PREPAYMENT", paymentLink:"", foc:"ON REQUEST", breakfast:"CHF 15.00", link:"" },
+        { name:"LEISURE GROUPS",  rate:"GP1",   market:"OT", proforma:"YES", payment:"PREPAYMENT", paymentLink:"", foc:"ON REQUEST", breakfast:"CHF 13.00", link:"" },
+        { name:"EUROPE INCOMING", rate:"GP8",   market:"ST", proforma:"NO",  payment:"CL",        paymentLink:"", foc:"½ Twin ab 20 Pax", breakfast:"CHF 12.00", link:"" },
+        { name:"PANAVISION",      rate:"GP4",   market:"ST", proforma:"YES", payment:"PREPAYMENT",paymentLink:"", foc:"½ Twin ab 20 Pax", breakfast:"CHF 13.00", link:"" }
       ],
 
       linkLists: {
@@ -1289,6 +1325,8 @@
           { title:"EVENTKALENDER 2026", note:"Link einfügen", attachment:null }
         ],
         quickLinks: [],
+        fbLinks: [],
+        listsFormsLinks: [],
         calendarLinks: []
       },
 
@@ -1345,13 +1383,28 @@
           <td contenteditable="true" data-k="rate" data-i="${idx}">${escapeHtml(r.rate)}</td>
           <td contenteditable="true" data-k="market" data-i="${idx}">${escapeHtml(r.market)}</td>
           <td contenteditable="true" data-k="proforma" data-i="${idx}">${escapeHtml(r.proforma)}</td>
-          <td contenteditable="true" data-k="payment" data-i="${idx}">${escapeHtml(r.payment)}</td>
+
+          <td>
+            <div class="miniStack">
+              <div contenteditable="true" data-k="payment" data-i="${idx}" style="font-weight:900; outline:none;">${escapeHtml(r.payment)}</div>
+
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                <input class="linkInput" data-paylinkinp="${idx}" type="url"
+                       placeholder="Link (optional) – https://…" value="${escapeHtml(r.paymentLink || "")}" />
+                <button class="tinyBtn" data-payopen="${idx}" title="Payment-Link öffnen">Öffnen</button>
+              </div>
+            </div>
+          </td>
+
           <td contenteditable="true" data-k="foc" data-i="${idx}">${escapeHtml(r.foc)}</td>
           <td contenteditable="true" data-k="breakfast" data-i="${idx}">${escapeHtml(r.breakfast)}</td>
 
           <td>
-            <input class="linkInput" data-linkinp="${idx}" type="url"
-                   placeholder="https://…" value="${escapeHtml(r.link || "")}" readonly />
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <input class="linkInput" data-linkinp="${idx}" type="url"
+                     placeholder="Contract-Link (optional) – https://…" value="${escapeHtml(r.link || "")}" />
+              <button class="tinyBtn" data-linkopen="${idx}" title="Contract-Link öffnen">Öffnen</button>
+            </div>
           </td>
 
           <td><button class="tinyBtn" data-delrow="${idx}">Löschen</button></td>
@@ -1364,7 +1417,7 @@
         td.classList.toggle("tagYes", t === "YES");
       });
 
-      $$("#groupsTable tbody td[contenteditable='true']").forEach(td => {
+      $$("#groupsTable tbody [contenteditable='true']").forEach(td => {
         td.addEventListener("input", () => {
           const i = Number(td.dataset.i);
           const k = td.dataset.k;
@@ -1376,16 +1429,21 @@
         });
       });
 
-      // Link: click opens, dblclick edits, ESC revert, Enter save
-      $$("[data-linkinp]").forEach(inp => {
-        const i = Number(inp.dataset.linkinp);
+      function bindLinkInput(inp, getVal, setVal){
+        const i = Number(inp.dataset[getVal]);
 
-        inp.addEventListener("click", () => {
+        inp.addEventListener("click", (ev) => {
           if(!inp.readOnly) return;
           const url = normalizeUrl(inp.value);
           if(!url) return alert("Kein Link hinterlegt.");
-          const w = window.open(url, "_blank", "noopener,noreferrer");
-          if(!w) alert("Popup blockiert. Bitte Popups erlauben.");
+          try{
+            openInNewTab(url);
+          }catch(e){
+            // Fallback
+            const w = window.open(url, "_blank", "noopener,noreferrer");
+            if(!w) alert("Popup blockiert. Bitte Popups erlauben.");
+          }
+          ev.preventDefault();
         });
 
         inp.addEventListener("dblclick", () => {
@@ -1395,7 +1453,7 @@
         });
 
         const commit = () => {
-          state.groupsRows[i].link = (inp.value || "").trim();
+          setVal(i, (inp.value || "").trim());
           saveState(state);
           inp.readOnly = true;
         };
@@ -1407,12 +1465,78 @@
             inp.blur();
           }
           if(e.key === "Escape"){
-            inp.value = state.groupsRows[i].link || "";
+            inp.value = setVal(i, null, true) || "";
             inp.readOnly = true;
             inp.blur();
           }
         });
+      }
+
+      // LINK column
+            // CONTRACT link (frei einfügbar) + Öffnen-Button
+      $$("[data-linkinp]").forEach(inp => {
+        const i = Number(inp.dataset.linkinp);
+
+        inp.addEventListener("input", () => {
+          state.groupsRows[i].link = (inp.value || "").trim();
+          saveState(state);
+        });
+
+        inp.addEventListener("keydown", (e) => {
+          if(e.key === "Enter"){
+            e.preventDefault();
+            inp.blur();
+          }
+        });
       });
+
+      $$("[data-linkopen]").forEach(btn => {
+        const i = Number(btn.dataset.linkopen);
+        btn.addEventListener("click", (ev) => {
+          const raw = (state.groupsRows[i].link || "").trim();
+          if(!raw) return alert("Kein Contract-Link hinterlegt.");
+          const url = normalizeUrl(raw);
+          try{ openInNewTab(url); }catch(e){
+            const w = window.open(url, "_blank", "noopener,noreferrer");
+            if(!w) alert("Popup blockiert. Bitte Popups erlauben.");
+          }
+          ev.preventDefault();
+          ev.stopPropagation();
+        });
+      });
+
+      // PAYMENT link (frei editierbar + Öffnen-Button)
+      $$("[data-paylinkinp]").forEach(inp => {
+        const i = Number(inp.dataset.paylinkinp);
+
+        inp.addEventListener("input", () => {
+          state.groupsRows[i].paymentLink = (inp.value || "").trim();
+          saveState(state);
+        });
+
+        inp.addEventListener("keydown", (e) => {
+          if(e.key === "Enter"){
+            e.preventDefault();
+            inp.blur();
+          }
+        });
+      });
+
+      $$("[data-payopen]").forEach(btn => {
+        const i = Number(btn.dataset.payopen);
+        btn.addEventListener("click", (ev) => {
+          const raw = (state.groupsRows[i].paymentLink || "").trim();
+          if(!raw) return alert("Kein Payment-Link hinterlegt.");
+          const url = normalizeUrl(raw);
+          try{ openInNewTab(url); }catch(e){
+            const w = window.open(url, "_blank", "noopener,noreferrer");
+            if(!w) alert("Popup blockiert. Bitte Popups erlauben.");
+          }
+          ev.preventDefault();
+          ev.stopPropagation();
+        });
+      });
+
 
       $$("[data-delrow]").forEach(b => {
         b.addEventListener("click", () => {
@@ -1425,7 +1549,7 @@
     }
 
     $("#addRowBtn").addEventListener("click", () => {
-      state.groupsRows.push({ name:"NEU", rate:"", market:"", proforma:"NO", payment:"", foc:"", breakfast:"", link:"" });
+      state.groupsRows.push({ name:"NEU", rate:"", market:"", proforma:"NO", payment:"", paymentLink:"", foc:"", breakfast:"", link:"" });
       saveState(state);
       renderGroupsTable(state.groupsRows);
     });
@@ -1441,17 +1565,66 @@
         const div = document.createElement("div");
         div.className = "listItem";
         const pill = it.attachment ? renderAttachmentPill(it.attachment) : `<span class="muted" style="font-size:12px;">—</span>`;
+        const firstUrl = extractFirstUrl(it.note || "");
+        const href = firstUrl ? normalizeUrl(firstUrl) : "";
+
+        // Icon anhand URL (pdf/excel/sonst Link)
+        let urlKind = "file";
+        const lowerHref = (href || "").toLowerCase();
+        if(lowerHref.endsWith(".pdf")) urlKind = "pdf";
+        else if(lowerHref.endsWith(".xls") || lowerHref.endsWith(".xlsx") || lowerHref.endsWith(".csv")) urlKind = "excel";
+        else if(lowerHref.endsWith(".ppt") || lowerHref.endsWith(".pptx")) urlKind = "ppt";
+
+        const urlIcon = href ? iconSvg(urlKind) : "";
+
+        const noteHtml = href
+          ? `<a class="openLink" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"
+                title="Link öffnen" style="color:inherit; text-decoration:none;">
+                <span style="display:inline-flex; align-items:center; gap:8px;">
+                  ${urlIcon}
+                  <span style="text-decoration:underline; font-weight:800;">${escapeHtml(it.note || "")}</span>
+                </span>
+              </a>`
+          : `<small>${escapeHtml(it.note || "")}</small>`;
+
         div.innerHTML = `
           <span style="display:flex; flex-direction:column; gap:6px;">
             <span>${escapeHtml(it.title || "Ohne Titel")}</span>
-            <small>${escapeHtml(it.note || "")}</small>
+            ${noteHtml}
           </span>
           <span style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
             ${pill}
-            <small style="color:rgba(107,114,128,.95); font-weight:800;">Klick = bearbeiten</small>
+            <small style="color:rgba(107,114,128,.95); font-weight:800;">Klick = bearbeiten • Link-Zeile anklicken = öffnen</small>
           </span>
         `;
-        div.addEventListener("click", () => editLinkItem(listKey, idx));
+
+        div.addEventListener("click", (ev) => {
+          // Wenn der Nutzer direkt auf den Link klickt, soll NICHT der Bearbeiten-Dialog aufgehen.
+          if(ev.target && ev.target.closest && ev.target.closest("a.openLink")){
+            return; // Browser öffnet den Link (kein Popup-Blocker)
+          }
+
+          // Ctrl/⌘/Alt + Klick: öffnet zuerst URL aus Note, sonst das Dokument
+          if(wantsOpenLink(ev)){
+            if(openUrlFromText(it.note || "")){
+              ev.preventDefault();
+              ev.stopPropagation();
+              return;
+            }
+            if(it.attachment){
+              openAttachment(it.attachment);
+              ev.preventDefault();
+              ev.stopPropagation();
+              return;
+            }
+            alert("Kein Link/Dokument hinterlegt.");
+            ev.preventDefault();
+            ev.stopPropagation();
+            return;
+          }
+          editLinkItem(listKey, idx);
+        });
+
         wrap.appendChild(div);
       });
 
@@ -1464,7 +1637,7 @@
       return new Promise((resolve) => {
         const input = document.createElement("input");
         input.type = "file";
-        input.accept = ".pdf,.xls,.xlsx,.csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv";
+        input.accept = ".pdf,.xls,.xlsx,.csv,.ppt,.pptx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation";
         input.style.display = "none";
         document.body.appendChild(input);
         input.addEventListener("change", () => {
@@ -1790,13 +1963,11 @@
     $("#addNoteLF").addEventListener("click", () => addNote("listsForms", "Neues Feld"));
     $("#saveLF").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
 
-    $("#addReportBox").addEventListener("click", () => addNote("reports", "Bericht Feld"));
-    $("#saveReports").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
-
     $("#addHandover").addEventListener("click", () => addNote("handover", "Übergabe Punkt"));
     $("#saveHandover").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
 
-    $("#addContacts").addEventListener("click", () => addNote("contacts", "Kontakt"));
+    // "Telefon/Kontakte" wurde zu "Notizen" umbenannt (IDs bleiben, damit nichts bricht)
+    $("#addContacts").addEventListener("click", () => addNote("contacts", "Notiz"));
     $("#saveContacts").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
 
     $("#addTodoNote").addEventListener("click", () => addNote("todoNotes", "Notiz"));
@@ -2470,6 +2641,7 @@
         market: (r?.market ?? "").toString(),
         proforma: (r?.proforma ?? "").toString(),
         payment: (r?.payment ?? "").toString(),
+        paymentLink: (r?.paymentLink ?? "").toString(),
         foc: (r?.foc ?? "").toString(),
         breakfast: (r?.breakfast ?? "").toString(),
         link: (r?.link ?? "").toString()
@@ -2493,11 +2665,11 @@
 
       renderGroupsTable(state.groupsRows);
 
+      renderLinkList("fbLinksList", "fbLinks");
+      renderLinkList("listsFormsLinksList", "listsFormsLinks");
       renderLinkList("quickLinksList", "quickLinks");
-      renderLinkList("calendarLinksList", "calendarLinks");
 
       renderListsFormsNotes();
-      renderNotes($("#reportsNotes"), "reports");
       renderNotes($("#handoverNotes"), "handover");
       renderNotes($("#contactsNotes"), "contacts");
       renderNotes($("#todoNotes"), "todoNotes");

@@ -1,4 +1,4 @@
-!doctype html>
+<!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -834,21 +834,7 @@
 
       <!-- SECTION: LISTS & FORMS -->
       <section id="listsForms" class="section">
-        <div class="card">
-          <div class="cardHeader">
-            <h3>Listen & Formulare</h3>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn" id="addNoteLF">+ Notizbox</button>
-              <button class="btn" id="saveLF">Speichern</button>
-            </div>
-          </div>
-          <div class="cardBody">
-            <div class="twoCol">
-              <div class="noteGrid" id="lfNotesLeft"></div>
-              <div class="noteGrid" id="lfNotesRight"></div>
-            </div>
-          </div>
-        </div>
+        
 
 
         <div class="card">
@@ -1960,9 +1946,6 @@
     $("#saveChecklists").addEventListener("click", () => { saveState(state); alert("Checklisten gespeichert ✅"); });
 
     /* -------------------------- Buttons for notes sections --------------------------- */
-    $("#addNoteLF").addEventListener("click", () => addNote("listsForms", "Neues Feld"));
-    $("#saveLF").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
-
     $("#addHandover").addEventListener("click", () => addNote("handover", "Übergabe Punkt"));
     $("#saveHandover").addEventListener("click", () => { saveState(state); alert("Gespeichert ✅"); });
 
@@ -2669,7 +2652,6 @@
       renderLinkList("listsFormsLinksList", "listsFormsLinks");
       renderLinkList("quickLinksList", "quickLinks");
 
-      renderListsFormsNotes();
       renderNotes($("#handoverNotes"), "handover");
       renderNotes($("#contactsNotes"), "contacts");
       renderNotes($("#todoNotes"), "todoNotes");

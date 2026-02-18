@@ -42,12 +42,14 @@
 
     .app{
       display:grid;
-      grid-template-columns: 260px 1fr;
+      grid-template-columns: 240px 1fr;
       min-height:100vh;
     }
 
     /* Sidebar */
     .sidebar{
+      display:flex;
+      flex-direction:column;
       background: linear-gradient(180deg, #1b1021, #120a17);
       color:#fff;
       padding:16px;
@@ -68,9 +70,9 @@
 
     /* Profile image more pink emphasis */
     .avatar{
-      width:44px;
-      height:44px;
-      border-radius:16px;
+      width:60px;
+      height:60px;
+      border-radius:18px;
       overflow:hidden;
       border:2px solid rgba(192,38,120,.85);
       background: rgba(255,255,255,.10);
@@ -133,6 +135,30 @@
       box-shadow: 0 14px 28px rgba(192,38,120,.18);
     }
     .nav small{ color:rgba(255,255,255,.7); font-weight:600; }
+
+    
+    .downloadWrap{
+      margin-top:auto;
+      padding-top:12px;
+    }
+    .downloadBtn{
+      width:100%;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      text-align:left;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-weight:900;
+      transition:.15s ease;
+    }
+    .downloadBtn:hover{ transform: translateY(-1px); background:rgba(255,255,255,.12); }
+    .downloadBtn small{ color:rgba(255,255,255,.72); font-weight:750; }
 
     .nav .hint{
       margin-top:10px;
@@ -225,6 +251,17 @@
       grid-template-columns: 1.6fr 1fr;
       align-items:start;
     }
+    
+    /* LINKS Seite: 4 Tabellen gleich groß */
+    #listsForms.section.active{
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @media (max-width: 1100px){
+      #listsForms.section.active{
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* Groups soll volle Breite nehmen */
     #groups.section.active{
       grid-template-columns: 1fr;
@@ -592,6 +629,13 @@
       outline-offset: -2px;
       background: linear-gradient(180deg, #fff, #fff7fb);
     }
+    /* Kalender FIT: Heute + nächste 7 Tage hervorheben */
+    #calendarFit .fitOnlyWeekHighlight{
+      outline: 3px solid rgba(200, 30, 30, .75);
+      outline-offset: -3px;
+      box-shadow: 0 0 0 4px rgba(200, 30, 30, .12);
+    }
+
 
     /* FIT Calendar */
     .fitDayFooter{
@@ -705,7 +749,34 @@
     }
 
     /* Print: nur RESA Buch drucken */
+    
+    /* Print: einzelne Seite (je Navigation) */
     @media print{
+      body.printing .sidebar,
+      body.printing .topbar{
+        display:none !important;
+      }
+      body.printing .main{
+        padding:0 !important;
+        /* Versuch: alles auf 1 Seite skalieren (Browser-abhängig) */
+        zoom: var(--printZoom, 0.9);
+      }
+      body.printing section{
+        display:none !important;
+      }
+      body.printing section.printTarget{
+        display:block !important;
+      }
+      body.printing .card{
+        box-shadow:none !important;
+      }
+      body.printing .cardHeader,
+      body.printing .cardBody{
+        break-inside: avoid;
+      }
+    }
+
+@media print{
       body.print-resa .sidebar,
       body.print-resa .topbar,
       body.print-resa section:not(#resaBook){
@@ -775,6 +846,14 @@
           🧾 Groups: Link-Spalte → Klick öffnet • Doppelklick bearbeitet.<br>
           🧾 Payment: Feld ist editierbar (Text + optionaler Link).
         </div>
+
+      <div class="downloadWrap">
+        <button class="downloadBtn" id="downloadHtmlBtn" title="Lädt eine HTML-Datei herunter (inkl. deiner aktuellen Änderungen)">
+          ⬇️ Dashboard HTML
+          <small>Download</small>
+        </button>
+      </div>
+
       </div>
     </aside>
 
@@ -802,6 +881,7 @@
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn" id="addRowBtn">+ Zeile</button>
               <button class="btn" id="saveTableBtn">Speichern</button>
+              <button class="btn" data-print="groups">Drucken</button>
             </div>
           </div>
           <div class="cardBody">
@@ -840,7 +920,10 @@
         <div class="card">
           <div class="cardHeader">
             <h3>F &amp; B Links</h3>
-            <button class="tinyBtn" data-additem="fbLinks">+ Link</button>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="tinyBtn" data-additem="fbLinks">+ Link</button>
+              <button class="btn" data-print="listsForms">Drucken</button>
+            </div>
           </div>
           <div class="cardBody">
             <div id="fbLinksList"></div>
@@ -857,7 +940,18 @@
           </div>
         </div>
 
+        
         <div class="card">
+          <div class="cardHeader">
+            <h3>Bank Links</h3>
+            <button class="tinyBtn" data-additem="bankLinks">+ Link</button>
+          </div>
+          <div class="cardBody">
+            <div id="bankLinksList"></div>
+          </div>
+        </div>
+
+<div class="card">
           <div class="cardHeader">
             <h3>WEB Links</h3>
             <button class="tinyBtn" data-additem="quickLinks">+ Link</button>
@@ -879,6 +973,7 @@
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn" id="addHandover">+ Punkt</button>
               <button class="btn" id="saveHandover">Speichern</button>
+              <button class="btn" data-print="handover">Drucken</button>
             </div>
           </div>
           <div class="cardBody">
@@ -908,6 +1003,7 @@
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn" id="addTodo">+ Task</button>
               <button class="btn" id="saveTodo">Speichern</button>
+              <button class="btn" data-print="todo">Drucken</button>
             </div>
           </div>
           <div class="cardBody">
@@ -937,6 +1033,7 @@
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn" id="addChecklist">+ Checklist</button>
               <button class="btn" id="saveChecklists">Speichern</button>
+              <button class="btn" data-print="checklists">Drucken</button>
             </div>
           </div>
           <div class="cardBody">
@@ -993,6 +1090,7 @@
               <button class="btn" id="calTodayBtn">Heute</button>
               <button class="btn" id="calClearMonthBtn" title="Löscht alle Einträge in diesem Monat">Monat leeren</button>
               <button class="btn" id="calSaveBtn">Speichern</button>
+              <button class="btn" data-print="calendar" data-landscape="1">Drucken</button>
             </div>
           </div>
           <div class="cardBody">
@@ -1041,6 +1139,7 @@
               <button class="btn" id="fitTodayBtn">Heute</button>
               <button class="btn" id="fitClearMonthBtn" title="Löscht alle FIT-Markierungen in diesem Monat">Monat leeren</button>
               <button class="btn" id="fitSaveBtn">Speichern</button>
+              <button class="btn" data-print="calendarFit" data-landscape="1">Drucken</button>
             </div>
           </div>
 
@@ -1313,6 +1412,7 @@
         quickLinks: [],
         fbLinks: [],
         listsFormsLinks: [],
+        bankLinks: [],
         calendarLinks: []
       },
 
@@ -2204,6 +2304,19 @@
           box.classList.add("todayRing");
         }
 
+        // Zusätzlich: Heute + nächste 7 Tage rot umranden
+        if(inMonth){
+          const cellDate = new Date(y, m, dayNum);
+          const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const end = new Date(start);
+          end.setDate(start.getDate() + 7);
+
+          if(cellDate >= start && cellDate <= end){
+            box.classList.add("fitOnlyWeekHighlight");
+          }
+        }
+
+
         const top = document.createElement("div");
         top.className = "dayTop";
         top.innerHTML = `
@@ -2393,6 +2506,19 @@
         if(inMonth && isThisMonth && dayNum === today.getDate()){
           box.classList.add("todayRing");
         }
+
+        // Zusätzlich: Heute + nächste 7 Tage rot umranden
+        if(inMonth){
+          const cellDate = new Date(y, m, dayNum);
+          const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const end = new Date(start);
+          end.setDate(start.getDate() + 7);
+
+          if(cellDate >= start && cellDate <= end){
+            box.classList.add("fitOnlyWeekHighlight");
+          }
+        }
+
 
         const top = document.createElement("div");
         top.className = "dayTop";
@@ -2650,6 +2776,7 @@
 
       renderLinkList("fbLinksList", "fbLinks");
       renderLinkList("listsFormsLinksList", "listsFormsLinks");
+      renderLinkList("bankLinksList", "bankLinks");
       renderLinkList("quickLinksList", "quickLinks");
 
       renderNotes($("#handoverNotes"), "handover");
@@ -2668,6 +2795,119 @@
       buildFitCalendarControlsOnce();
       renderFitCalendar();
     }
+
+
+    /* -------------------------- Download current HTML (inkl. State) --------------------------- */
+    function base64EncodeUnicode(str){
+      try{
+        return btoa(unescape(encodeURIComponent(str)));
+      }catch(e){
+        // fallback (should rarely happen)
+        return btoa(str);
+      }
+    }
+
+    function injectSnapshotIntoHtml(html, key, stateObj){
+      const json = JSON.stringify(stateObj ?? {});
+      const b64  = base64EncodeUnicode(json);
+
+      const inject = `
+<script>
+  (function(){
+    try{
+      const KEY = ${JSON.stringify("RESA_DASH_KEY_PLACEHOLDER")};
+      const b64 = ${JSON.stringify("STATE_B64_PLACEHOLDER")};
+      const json = decodeURIComponent(escape(atob(b64)));
+      localStorage.setItem(KEY, json);
+    }catch(e){}
+  })();
+<\/script>
+`;
+      return html.replace("RESA_DASH_KEY_PLACEHOLDER", key).replace("STATE_B64_PLACEHOLDER", b64).replace("</body>", inject + "\n</body>");
+    }
+
+    const dlBtn = document.getElementById("downloadHtmlBtn");
+    if(dlBtn){
+      dlBtn.addEventListener("click", () => {
+        try{
+          // Aktuellen Stand sichern
+          saveState(state);
+
+          // Aktuelles HTML holen
+          const html = "<!doctype html>\n" + document.documentElement.outerHTML;
+
+          // Snapshot in die Datei injizieren (damit beim Öffnen der Download-Datei dein Stand sofort da ist)
+          const withSnap = injectSnapshotIntoHtml(html, KEY, state);
+
+          const blob = new Blob([withSnap], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "reservations_dashboard_shared.html";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }catch(e){
+          alert("Download fehlgeschlagen.");
+          console.error(e);
+        }
+      });
+    }
+
+
+
+    /* -------------------------- Print per Seite --------------------------- */
+    function setPagePrintStyle(landscape){
+      let style = document.getElementById("printPageStyle");
+      if(!style){
+        style = document.createElement("style");
+        style.id = "printPageStyle";
+        document.head.appendChild(style);
+      }
+      // A4 ist gängig; Browser können es ignorieren, aber meist klappt es.
+      style.textContent = landscape
+        ? "@page{ size: A4 landscape; margin: 10mm; }"
+        : "@page{ size: A4 portrait; margin: 10mm; }";
+    }
+
+    function clearPagePrintStyle(){
+      const style = document.getElementById("printPageStyle");
+      if(style) style.remove();
+    }
+
+    function printSection(sectionId, landscape=false){
+      // Ziel markieren
+      document.body.classList.add("printing");
+      document.documentElement.style.setProperty("--printZoom", landscape ? "0.75" : "0.9");
+
+      $$(".section").forEach(sec => sec.classList.remove("printTarget"));
+      const target = document.getElementById(sectionId);
+      if(target) target.classList.add("printTarget");
+
+      setPagePrintStyle(!!landscape);
+
+      // drucken
+      window.print();
+
+      // cleanup (nach Druckdialog)
+      setTimeout(() => {
+        document.body.classList.remove("printing");
+        if(target) target.classList.remove("printTarget");
+        clearPagePrintStyle();
+        document.documentElement.style.removeProperty("--printZoom");
+      }, 250);
+    }
+
+    $$("[data-print]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-print");
+        const landscape = btn.getAttribute("data-landscape") === "1";
+        printSection(id, landscape);
+      });
+    });
 
     /* Boot */
     saveState(state);

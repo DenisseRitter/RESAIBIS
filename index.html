@@ -852,7 +852,28 @@
           ⬇️ Dashboard HTML
           <small>Download</small>
         </button>
-      </div>
+      
+        <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+          <button class="downloadBtn" id="cloudConnectBtn" title="Wähle eine JSON-Datei in einem OneDrive/Dropbox/Netzlaufwerk-Ordner (oder erstelle eine neue) und aktiviere Auto-Sync.">
+            ☁️ Cloud Sync
+            <small>Verbinden</small>
+          </button>
+          <button class="downloadBtn" id="cloudSyncNowBtn" title="Lädt den aktuellen Stand aus der Cloud-Datei (Pull) und überschreibt den lokalen Stand.">
+            ⬇️ Cloud → Lokal
+            <small>Jetzt laden</small>
+          </button>
+          <button class="downloadBtn" id="cloudDisconnectBtn" title="Deaktiviert Auto-Sync (lokal funktioniert weiter).">
+            ⛔ Cloud Sync
+            <small>Trennen</small>
+          </button>
+          <div id="cloudStatus" style="font-size:12px; color:rgba(255,255,255,.72); font-weight:800; padding:0 2px;">
+            Cloud: nicht verbunden
+          </div>
+          <div style="font-size:11.5px; color:rgba(255,255,255,.65); line-height:1.35; padding:0 2px;">
+            Tipp: Lege die JSON-Datei in einen <b>OneDrive</b>-Ordner (oder ähnliches). Dann synchronisiert OneDrive die Datei automatisch zwischen PCs.
+          </div>
+        </div>
+</div>
 
       </div>
     </aside>
@@ -1195,8 +1216,229 @@
         return null;
       }
     }
-    function saveState(state){
+        function saveStateLocal(state){
       localStorage.setItem(KEY, JSON.stringify(state));
+    }
+
+    // Cloud Sync (OneDrive/Dropbox/Netzlaufwerk geeignet)
+    // Idee: State wird zusätzlich in eine JSON-Datei geschrieben, die in einem synchronisierten Ordner liegt.
+    // Unterstützt: Chrome/Edge (File System Access API). Andere Browser arbeiten weiterhin nur lokal.
+    const CLOUD = {
+      enabled: false,
+      handle: null,
+      lastHash: "",
+      debounceTimer: null,
+      busy: false
+    };
+
+    const CLOUD_DB = "resa_dashboard_cloud_v1";
+    const CLOUD_STORE = "kv";
+    const CLOUD_KEY_HANDLE = "fileHandle";
+
+    function isFileSystemAccessSupported(){
+      return !!(window.showOpenFilePicker && window.showSaveFilePicker);
+    }
+
+    function hashStr(str){
+      // einfacher, schneller Hash (nicht kryptografisch)
+      let h = 2166136261;
+      for(let i=0;i<str.length;i++){
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0).toString(16);
+    }
+
+    function cloudStatusEl(){ return document.getElementById("cloudStatus"); }
+    function setCloudStatus(msg){
+      const el = cloudStatusEl();
+      if(el) el.textContent = msg;
+    }
+
+    function idbOpen(){
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(CLOUD_DB, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if(!db.objectStoreNames.contains(CLOUD_STORE)){
+            db.createObjectStore(CLOUD_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbGet(key){
+      const db = await idbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(CLOUD_STORE, "readonly");
+        const st = tx.objectStore(CLOUD_STORE);
+        const req = st.get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbSet(key, val){
+      const db = await idbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(CLOUD_STORE, "readwrite");
+        const st = tx.objectStore(CLOUD_STORE);
+        const req = st.put(val, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbDel(key){
+      const db = await idbOpen();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(CLOUD_STORE, "readwrite");
+        const st = tx.objectStore(CLOUD_STORE);
+        const req = st.delete(key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function cloudTryRestoreHandle(){
+      try{
+        const h = await idbGet(CLOUD_KEY_HANDLE);
+        if(h){
+          CLOUD.handle = h;
+          CLOUD.enabled = true;
+          setCloudStatus("Cloud: verbunden (Auto-Sync aktiv)");
+          return true;
+        }
+      }catch(e){
+        // ignorieren
+      }
+      return false;
+    }
+
+    async function cloudConnect(){
+      if(!isFileSystemAccessSupported()){
+        alert("Cloud Sync braucht Chrome/Edge (File System Access API). In diesem Browser funktioniert nur Lokal-Speicher.");
+        return;
+      }
+
+      try{
+        // Nutzer wählt/erstellt eine JSON-Datei
+        const handle = await window.showSaveFilePicker({
+          suggestedName: "resa_dashboard_state.json",
+          types: [{
+            description: "JSON",
+            accept: { "application/json": [".json"] }
+          }]
+        });
+
+        // Berechtigung abfragen
+        const perm = await handle.requestPermission({ mode: "readwrite" });
+        if(perm !== "granted"){
+          alert("Berechtigung nicht erteilt. Cloud Sync nicht aktiviert.");
+          return;
+        }
+
+        CLOUD.handle = handle;
+        CLOUD.enabled = true;
+        await idbSet(CLOUD_KEY_HANDLE, handle);
+
+        setCloudStatus("Cloud: verbunden (Auto-Sync aktiv)");
+        // Erstmal pushen, damit Datei sicher den aktuellen Stand hat
+        await cloudPushNow(true);
+        alert("Cloud Sync aktiviert ✅\n\nHinweis: Lege diese JSON-Datei in einen OneDrive-Ordner, damit sie automatisch auf anderen PCs synchron erscheint.");
+      }catch(e){
+        console.warn("Cloud connect failed", e);
+        if(String(e?.name || "").includes("AbortError")) return;
+        alert("Cloud Sync konnte nicht aktiviert werden.");
+      }
+    }
+
+    async function cloudDisconnect(){
+      CLOUD.enabled = false;
+      CLOUD.handle = null;
+      CLOUD.lastHash = "";
+      try{ await idbDel(CLOUD_KEY_HANDLE); }catch(e){}
+      setCloudStatus("Cloud: nicht verbunden");
+      alert("Cloud Sync deaktiviert.");
+    }
+
+    function cloudSchedulePush(){
+      if(!CLOUD.enabled || !CLOUD.handle) return;
+      if(CLOUD.debounceTimer) clearTimeout(CLOUD.debounceTimer);
+      CLOUD.debounceTimer = setTimeout(() => { cloudPushNow(false); }, 900);
+    }
+
+    async function cloudPushNow(force){
+      if(!CLOUD.enabled || !CLOUD.handle) return;
+      if(CLOUD.busy) return;
+      CLOUD.busy = true;
+
+      try{
+        const payload = JSON.stringify(state);
+        const h = hashStr(payload);
+        if(!force && h === CLOUD.lastHash){
+          CLOUD.busy = false;
+          return;
+        }
+
+        const writable = await CLOUD.handle.createWritable();
+        await writable.write(payload);
+        await writable.close();
+
+        CLOUD.lastHash = h;
+        setCloudStatus("Cloud: verbunden (letztes Speichern: " + new Date().toLocaleString() + ")");
+      }catch(e){
+        console.warn("Cloud push failed", e);
+        setCloudStatus("Cloud: Fehler beim Speichern – prüfe Berechtigung/Datei");
+        // nicht deaktivieren, User kann reconnecten
+      }finally{
+        CLOUD.busy = false;
+      }
+    }
+
+    async function cloudPullNow(){
+      if(!CLOUD.enabled || !CLOUD.handle) return;
+
+      try{
+        const perm = await CLOUD.handle.requestPermission({ mode: "read" });
+        if(perm !== "granted"){
+          alert("Keine Leseberechtigung. Bitte erneut verbinden.");
+          return;
+        }
+
+        const file = await CLOUD.handle.getFile();
+        const txt = await file.text();
+        if(!txt.trim()){
+          alert("Cloud-Datei ist leer.");
+          return;
+        }
+
+        const incoming = JSON.parse(txt);
+
+        // Minimaler Schutz: nur übernehmen, wenn es nach unserem State aussieht
+        if(typeof incoming !== "object" || incoming === null){
+          alert("Ungültige Cloud-Datei (kein JSON-Objekt).");
+          return;
+        }
+
+        state = incoming;
+        saveStateLocal(state);
+        if(typeof rerenderAll === "function") rerenderAll();
+
+        CLOUD.lastHash = hashStr(JSON.stringify(state));
+        setCloudStatus("Cloud: geladen (letztes Laden: " + new Date().toLocaleString() + ")");
+        alert("Cloud → Lokal geladen ✅");
+      }catch(e){
+        console.warn("Cloud pull failed", e);
+        alert("Cloud-Datei konnte nicht geladen werden (JSON ungültig oder kein Zugriff).");
+      }
+    }
+
+    function saveState(state){
+      saveStateLocal(state);
+      cloudSchedulePush();
     }
 
     /* -------------------------- File helpers (base64 attachments) --------------------------- */
@@ -1445,7 +1687,19 @@ function openInNewTab(url){
 
     let state = loadState() || structuredClone(DEFAULT);
 
-    /* -------------------------- Navigation --------------------------- */
+    
+    // Cloud buttons
+    const cloudConnectBtn = document.getElementById("cloudConnectBtn");
+    const cloudSyncNowBtn = document.getElementById("cloudSyncNowBtn");
+    const cloudDisconnectBtn = document.getElementById("cloudDisconnectBtn");
+
+    if(cloudConnectBtn) cloudConnectBtn.addEventListener("click", () => cloudConnect());
+    if(cloudSyncNowBtn) cloudSyncNowBtn.addEventListener("click", () => cloudPullNow());
+    if(cloudDisconnectBtn) cloudDisconnectBtn.addEventListener("click", () => cloudDisconnect());
+
+    // Try auto-restore previous connection
+    cloudTryRestoreHandle();
+/* -------------------------- Navigation --------------------------- */
     $$(".navBtn").forEach(btn => {
       btn.addEventListener("click", () => {
         $$(".navBtn").forEach(b => b.classList.remove("active"));
@@ -2915,3 +3169,4 @@ function openInNewTab(url){
   </script>
 </body>
 </html>
+
